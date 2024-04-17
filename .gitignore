@@ -1,0 +1,21 @@
+# Don't check auto-generated stuff into git
+coverage
+node_modules
+stats.json
+build
+storage
+# Cruft
+.DS_Store
+npm-debug.log
+.idea
+yarn.lock
+yarn-error.log
+*.orig
+# store
+/uploads
+# config
+server/config/config.js
+/server/templates/pdf/
+
+# cache
+/cache/
