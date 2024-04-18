@@ -5,11 +5,12 @@ const userRoutes = require("./server/api/users/users.router");
 const fileRoutes = require("./server/api/file/file.router");
 const cors = require("cors");
 const router = require("./server/router");
+const bodyParser = require("body-parser");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 mongoose
   .connect(
     "mongodb+srv://huygaming04:dnhuy2012@imagecaptioning.rzqchro.mongodb.net/?retryWrites=true&w=majority&appName=ImageCaptioning"

@@ -70,40 +70,41 @@ async function extractImagesFromZip(filePath, folderName) {
 async function extractImagesFromRar(filePath, folderName) {
   const imagePaths = [];
   const extractPath = path.join("uploads", folderName);
-
+  console.log(extractPath);
   if (!fs.existsSync(extractPath)) {
-    fs.mkdirSync(extractPath);
+    fs.mkdirSync(extractPath, { recursive: true });
   }
+
   try {
-    // Create the extractor with the file information (returns a promise)
     const extractor = await createExtractorFromFile({
       filepath: filePath,
       targetPath: extractPath,
     });
 
-    // Extract the files
-    [...extractor.extract().files];
+    // const files = extractor.extract().files;
+    const extractedFiles = [...extractor.extract().files];
+    // for (const file of files) {
+    //   console.log(file.fileHeader.name.match(/\.(jpg|jpeg|png|gif)$/i));
+    //   // if (file.type === "FILE") {
+    //   //   const fileName = path.basename(file.fileHeader.name);
+    //   //   const imageExtension = path.extname(fileName).toLowerCase();
+    //   //   const entryPath = path.join(extractPath, fileName);
+
+    //   //   if (
+    //   //     imageExtension === ".jpg" ||
+    //   //     imageExtension === ".jpeg" ||
+    //   //     imageExtension === ".png"
+    //   //   ) {
+    //   //     // If it's an image file, extract it to the folder with the RAR file name
+    //   //     await fs.promises.mkdir(extractPath, { recursive: true });
+    //   //     await file.extract(extractPath);
+    //   //     imagePaths.push(entryPath);
+    //   //   }
+    //   // }
+    // }
   } catch (err) {
-    // May throw UnrarError, see docs
     console.error(err);
   }
-  // return imagePaths;
-  // await unrar.list(filePath, (err, entries) => {
-  //   if (err) throw err;
-  //   entries.forEach(async (entry) => {
-  //     const imageExtension = path.extname(entry.name).toLowerCase();
-  //     if (
-  //       imageExtension === ".jpg" ||
-  //       imageExtension === ".jpeg" ||
-  //       imageExtension === ".png"
-  //     ) {
-  //       const imagePath = path.join(extractPath, path.basename(entry.name));
-  //       await unrar
-  //         .stream(filePath, entry.name)
-  //         .pipe(fs.createWriteStream(imagePath));
-  //       imagePaths.push(imagePath);
-  //     }
-  //   });
-  // });
-  // return imagePaths;
+
+  return imagePaths;
 }

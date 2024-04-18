@@ -20,6 +20,7 @@ router.post(
   "/upload",
   authenticateToken,
   (req, res, next) => {
+    console.log(req.user.role);
     // Check if the user has the necessary role to access this route
     if (
       !(req.user.role.includes("upload") || req.user.role.includes("admin"))

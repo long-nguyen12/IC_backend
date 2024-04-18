@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const DescribeSchema = new mongoose.Schema(
   {
-    name: String,
-    describe: Array,
+    name: { type: String, required: true },
+    describe: { type: Array, required: true },
   },
   { timestamps: true }
 );
