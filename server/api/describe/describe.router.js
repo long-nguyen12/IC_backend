@@ -5,6 +5,7 @@ const {
   createDescribe,
   getDescribeByName,
   getAllDescribes,
+  getAllDataByFolder,
 } = require("./describe.controller");
 const multer = require("multer");
 const authenticateToken = require("../../auth");
@@ -26,5 +27,6 @@ router.post(
 );
 router.get("/describe_all", getAllDescribes);
 router.get("/describe", getDescribeByName);
+router.post("/create_json", upload.none(), getAllDataByFolder);
 
 module.exports = router;

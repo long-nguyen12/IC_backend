@@ -7,5 +7,6 @@ const router = express.Router();
 
 router.get("/image", imageController.getAllImageName);
 router.get("/view-image", imageController.viewImage);
+router.get("/download-json", imageController.downloadJson);
 
 module.exports = router;

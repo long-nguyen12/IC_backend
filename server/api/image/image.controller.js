@@ -90,3 +90,23 @@ const getImagePath = async (fileName = "", filesDir = "") => {
   if (!fileName) return null;
   return path.join(filesDir, fileName);
 };
+
+exports.downloadJson = async (req, res) => {
+  // res.json({ folder: req.query.folder, name: req.query.name });
+  const file = await getJsonPath(`${req.query.name}.json`);
+  const type = mime[path.extname(file).slice(1)] || "text/plain";
+  const s = fs.createReadStream(file);
+  s.on("open", function () {
+    res.set("Content-Type", type);
+    s.pipe(res);
+  });
+  s.on("error", function () {
+    res.set("Content-Type", "text/plain");
+    res.status(404).end("Not found");
+  });
+};
+
+const getJsonPath = async (fileName = "", filesDir = "output") => {
+  if (!fileName) return null;
+  return path.join(filesDir, fileName);
+};
