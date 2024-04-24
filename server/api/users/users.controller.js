@@ -61,7 +61,7 @@ async function loginUser(req, res) {
       { userId: user._id, role: user.role, email: user.email },
       "your_secret_key",
       {
-        expiresIn: "1h",
+        expiresIn: "24h",
       }
     );
     res.json({ token });

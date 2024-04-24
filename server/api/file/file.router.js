@@ -15,7 +15,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// router.post("/upload", upload.single("file"), fileController.uploadFile);
+router.get("/get-file-name", authenticateToken, fileController.getFileByFolder);
+router.put(
+  "/update-file-info",
+  authenticateToken,
+  fileController.updateFileInfo
+);
 router.post(
   "/upload",
   authenticateToken,

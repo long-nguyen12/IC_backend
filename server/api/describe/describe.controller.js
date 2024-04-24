@@ -1,4 +1,6 @@
 const Describe = require("./describe.model");
+const FileController = require("../file/file.controller");
+const File = require("../file/file.model");
 const path = require("path");
 const fs = require("fs");
 var sizeOf = require("image-size");
@@ -28,6 +30,43 @@ async function getAllDescribes(req, res) {
   }
 }
 
+async function getAllDescribesByFolder(req, res) {
+  try {
+    const { folder, page = 1, limit = 10 } = req.query;
+
+    // Convert page and limit to numbers
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    // Calculate the number of documents to skip
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Retrieve documents with pagination
+    const describes = await Describe.find({ folder })
+      .skip(skip)
+      .limit(limitNumber);
+
+    // Check if any documents were found
+    if (describes.length === 0) {
+      // If page 2 is null, return data from page 1
+      if (pageNumber > 1) {
+        const firstPageDocuments = await Describe.find({ folder }).limit(
+          limitNumber
+        );
+        const names = firstPageDocuments.map((describe) => describe.name);
+        return res.status(200).json({ describes_name: names });
+      } else {
+        return res.status(404).json({ message: "Không tìm thấy dữ liệu" });
+      }
+    }
+
+    const names = describes.map((describe) => describe.name);
+    res.status(200).json({ describes_name: names });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 async function createDescribe(req, res) {
   try {
     const { name, folder, describe } = req.body;
@@ -44,6 +83,10 @@ async function createDescribe(req, res) {
       describe: describeArray,
     });
     await newDescribe.save();
+    const file = await File.findOne({ folder, name });
+    file.haveCaption = true;
+    await file.save();
+    // await FileController.updateFileInfo({ query: { folder, name } }, res);
     res.status(200).json({ message: "Lưu mô tả thành công" });
   } catch (error) {
     res.status(500).json({ error: error });
@@ -139,7 +182,8 @@ async function getAllDataByFolder(req, res) {
         data.annotations.push({
           id: data.annotations.length + 1,
           image_id: id, // ID of the last added image
-          caption,
+          caption: caption.caption,
+          segment_caption: caption.segment_caption,
         });
       });
     }
@@ -155,13 +199,11 @@ async function getAllDataByFolder(req, res) {
     fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2));
 
     // Send JSON response
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "JSON file saved successfully",
-        file: jsonFilePath,
-      });
+    res.status(200).json({
+      success: true,
+      message: "JSON file saved successfully",
+      file: jsonFilePath,
+    });
   } catch (error) {
     // Send error response
     res.status(500).json({ success: false, error: error.message });
@@ -182,4 +224,5 @@ module.exports = {
   getDescribeByName,
   getAllDescribes,
   getAllDataByFolder,
+  getAllDescribesByFolder,
 };
