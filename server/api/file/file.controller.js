@@ -86,13 +86,17 @@ exports.uploadFile = async (req, res) => {
       imagePaths = await extractImagesFromZip(filePath, fileName);
     } else if (fileExtension === ".rar") {
       imagePaths = await extractImagesFromRar(filePath, fileName);
+      const extractor = await createExtractorFromFile(filePath)
+      const list = extractor.getFileList();
+      console.log(list);
     } else {
       return res
         .status(400)
         .send("Unsupported file format. Please upload a zip or rar file.");
     }
     const savePromises = [];
-    imagePaths.map((item) => {
+      console.log(imagePaths);
+      imagePaths.map((item) => {
       const newFile = new File({
         name: item,
         folder: fileName,
@@ -140,44 +144,44 @@ async function extractImagesFromZip(filePath, folderName) {
 
 async function extractImagesFromRar(filePath, folderName) {
   const imagePaths = [];
+  const listFolder = [];
   const extractPath = path.join("uploads", folderName);
-  console.log(extractPath);
+
+  // Check if the extractPath folder exists, if not, create it
   if (!fs.existsSync(extractPath)) {
     fs.mkdirSync(extractPath, { recursive: true });
   }
 
   try {
+    // Create extractor instance from RAR file
     const extractor = await createExtractorFromFile({
       filepath: filePath,
       targetPath: extractPath,
     });
 
-    // const files = extractor.extract().files;
-    const extractedFiles = [...extractor.extract().files];
-    for (const file of extractedFiles) {
-      // console.log(file.fileHeader.name.match(/\.(jpg|jpeg|png|gif)$/i));
-      const fileName = path.basename(file.fileHeader.name);
-      imagePaths.push(fileName);
-      // if (file.type === "FILE") {
-      //   const fileName = path.basename(file.fileHeader.name);
-      //   const imageExtension = path.extname(fileName).toLowerCase();
-      //   const entryPath = path.join(extractPath, fileName);
+    // Get list of files in the RAR archive
+    const list = extractor.getFileList();
+    // Extracted files information
+    // const listArcHeader = list.arcHeader; // archive header
+    // const fileHeaders = [...list.fileHeaders]; // list of file headers
 
-      //   if (
-      //     imageExtension === ".jpg" ||
-      //     imageExtension === ".jpeg" ||
-      //     imageExtension === ".png"
-      //   ) {
-      //     // If it's an image file, extract it to the folder with the RAR file name
-      //     await fs.promises.mkdir(extractPath, { recursive: true });
-      //     await file.extract(extractPath);
-      //     imagePaths.push(entryPath);
-      //   }
-      // }
+    // Extract files from the RAR archive
+    const extractedFiles = [...extractor.extract().files];
+    // Iterate through extracted files
+    for (const file of extractedFiles) {
+      // Get the base name of the file (excluding directories)
+      const fileName = path.basename(file.fileHeader.name);
+      if (file.fileHeader.name.includes("/")) {
+        if (!listFolder.includes(file.fileHeader.name.split("/")[0])) {
+          listFolder.push(file.fileHeader.name.split("/")[0]);
+        }
+        imagePaths.push(file.fileHeader.name);
+      }else{
+        imagePaths.push(fileName); 
+      }
     }
   } catch (err) {
-    console.error(err);
+    console.error(err); 
   }
-
   return imagePaths;
 }
