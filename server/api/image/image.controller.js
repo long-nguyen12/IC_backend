@@ -93,7 +93,7 @@ const getImagePath = async (fileName = "", filesDir = "") => {
 
 exports.downloadJson = async (req, res) => {
   // res.json({ folder: req.query.folder, name: req.query.name });
-  const file = await getJsonPath(`${req.query.name}.json`);
+  const file = await getJsonPath(`${req.query.name}_${req.query.subMenu}.json`);
   const type = mime[path.extname(file).slice(1)] || "text/plain";
   const s = fs.createReadStream(file);
   s.on("open", function () {

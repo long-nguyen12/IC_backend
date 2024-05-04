@@ -69,8 +69,10 @@ async function getAllDescribesByFolder(req, res) {
 
 async function createDescribe(req, res) {
   try {
-    const { name, folder, describe } = req.body;
-    let existingDescribe = await Describe.findOne({ name });
+    const { name, folder, describe, bbox } = req.body;
+    let existingDescribe = await Describe.findOne({
+      name: { $regex: name, $options: "i" },
+    });
 
     // If a document with the name exists, update its describe field
     if (existingDescribe) {
@@ -80,10 +82,14 @@ async function createDescribe(req, res) {
     const newDescribe = new Describe({
       name,
       folder,
+      bbox,
       describe: describeArray,
     });
     await newDescribe.save();
-    const file = await File.findOne({ folder, name });
+    const file = await File.findOne({
+      folder,
+      name: { $regex: name, $options: "i" },
+    });
     file.haveCaption = true;
     await file.save();
     // await FileController.updateFileInfo({ query: { folder, name } }, res);
@@ -99,7 +105,9 @@ async function getDescribeByName(req, res) {
       res.status(400).message("Cần tên dữ liệu");
     }
     // console.log(req.query.name);
-    let describe = await Describe.findOne({ name: req.query.name });
+    let describe = await Describe.findOne({
+      name: { $regex: req.query.name, $options: "i" },
+    });
     // console.log(describe);
     if (!describe) {
       res.status(404).message("Không tìm thấy dữ liệu");
@@ -116,7 +124,9 @@ async function updateDescribe(req, res) {
     const describeArray = JSON.parse(describe);
 
     // Find the document by name
-    let existingDescribe = await Describe.findOne({ name });
+    let existingDescribe = await Describe.findOne({
+      name: { $regex: name, $options: "i" },
+    });
 
     // If the document does not exist, return a 404 Not Found response
     if (!existingDescribe) {
@@ -140,9 +150,20 @@ async function updateDescribe(req, res) {
 
 async function getAllDataByFolder(req, res) {
   try {
-    const { folderName } = req.body;
+    const { folderName, nameSubFolder } = req.body;
     // Assuming you're using Mongoose to interact with MongoDB
-    const describeData = await Describe.find({ folder: folderName });
+    if (nameSubFolder !== "all") {
+      nameRegex = new RegExp(
+        "^" + nameSubFolder + "/.*\\.(jpg|png|jpeg)$",
+        "i"
+      );
+    } else {
+      nameRegex = /\.(jpg|png|jpeg)$/i;
+    }
+    const describeData = await Describe.find({
+      folder: folderName,
+      name: { $regex: nameRegex },
+    });
 
     // Construct JSON object
     const data = {
@@ -153,7 +174,7 @@ async function getAllDataByFolder(req, res) {
 
     // Iterate over each item in describeData
     for (const item of describeData) {
-      const { name, describe } = item;
+      const { name, describe, bbox } = item;
 
       // Assuming your images folder is in the same directory as this script
       const imagePath = path.join("uploads", folderName, name);
@@ -174,17 +195,31 @@ async function getAllDataByFolder(req, res) {
         id,
         width: dimensions.width,
         height: dimensions.height,
-        file_name: name,
+        file_name: name.split("/")[1],
         coco_url: name, // Assuming coco_url is the same as file_name
       });
 
-      describe.forEach((caption, index) => {
-        data.annotations.push({
-          id: data.annotations.length + 1,
-          image_id: id, // ID of the last added image
-          caption: caption.caption,
-          segment_caption: caption.segment_caption,
-        });
+      describe.forEach((caption, describeIndex) => {
+        if (bbox.length > 0) {
+          // If bbox exists, push annotation objects with bbox
+          bbox.forEach((bboxItem, bboxIndex) => {
+            data.annotations.push({
+              id: data.annotations.length + 1,
+              image_id: id, // ID of the last added image
+              bbox: bboxItem,
+              caption: caption.caption,
+              segment_caption: caption.segment_caption,
+            });
+          });
+        } else {
+          // If bbox doesn't exist, push annotation objects without bbox
+          data.annotations.push({
+            id: data.annotations.length + 1,
+            image_id: id, // ID of the last added image
+            caption: caption.caption,
+            segment_caption: caption.segment_caption,
+          });
+        }
       });
     }
 
@@ -195,7 +230,10 @@ async function getAllDataByFolder(req, res) {
     }
 
     // Write JSON object to file in the 'output' folder
-    const jsonFilePath = path.join("output", `${folderName}.json`);
+    const jsonFilePath = path.join(
+      "output",
+      `${folderName}_${nameSubFolder}.json`
+    );
     fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2));
 
     // Send JSON response
