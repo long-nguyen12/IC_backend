@@ -89,51 +89,19 @@ exports.getFileByFolder = async (req, res) => {
               folder: item.folder,
               bbox: [],
               describe: [],
-              categories_id: "",
-              categories_name: "",
+              categories_id: [],
+              categories_name: [],
             };
-
-            // const folderCategory = {
-            //   categories_id: "",
-            //   categories_name: "",
-            //   supercategory: "",
-            //   folder: "",
-            // };
             const annotations = obj.annotations.filter(
               (annotation) => annotation.image_id === image.id
             );
 
-            annotations.forEach((annotation) => {
+            annotations.forEach(async (annotation) => {
               if (annotation.caption || annotation.segment_caption) {
                 describe.describe.push({
                   caption: annotation?.caption?.toString(),
                   segment_caption: annotation?.segment_caption?.toString(),
                 });
-              }
-              if (annotation.bbox) {
-                describe.bbox.push(annotation.bbox);
-              }
-              const category = obj.categories.find(
-                (category) => category.id === annotation.category_id
-              );
-              if (category) {
-                describe.categories_id = category.id.toString();
-                describe.categories_name = category.name;
-              }
-            });
-            // obj.categories.forEach(async (category) => {
-            //   // const folderCategory = {
-            //     folderCategory.categories_id = category.id,
-            //     folderCategory.categories_name = category.name,
-            //     folderCategory.supercategory = category.supercategory,
-            //     folderCategory.folder = item.name.split("/")[0],
-            //   // };
-            // });
-            try {
-              const existingDescribe = await Describe.findOne({
-                name: describe.name,
-              });
-              if (!existingDescribe) {
                 const imgFile = await File.findOne({
                   folder,
                   name: { $regex: image.file_name, $options: "i" },
@@ -142,6 +110,23 @@ exports.getFileByFolder = async (req, res) => {
                   imgFile.haveCaption = true;
                   await imgFile.save();
                 }
+              }
+              if (annotation.bbox) {
+                describe.bbox.push(annotation.bbox);
+              }
+              const category = obj.categories.find(
+                (category) => category.id === annotation.category_id
+              );
+              if (category) {
+                describe.categories_id.push(category.id.toString());
+                describe.categories_name.push(category.name);
+              }
+            });
+            try {
+              const existingDescribe = await Describe.findOne({
+                name: describe.name,
+              });
+              if (!existingDescribe) {
                 await Describe.create(describe);
                 // await Categories.create(folderCategory);
               }
