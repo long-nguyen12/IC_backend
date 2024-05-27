@@ -69,7 +69,8 @@ async function getAllDescribesByFolder(req, res) {
 
 async function createDescribe(req, res) {
   try {
-    const { name, folder, describe, bbox } = req.body;
+    const { name, folder, describe, bbox, categories_name } = req.body;
+    console.log(bbox);
     let existingDescribe = await Describe.findOne({
       name: { $regex: name, $options: "i" },
     });
@@ -79,10 +80,14 @@ async function createDescribe(req, res) {
       return updateDescribe(req, res);
     }
     const describeArray = JSON.parse(describe);
+    const bboxArray = JSON.parse(bbox);
+    const cateroriesArray = JSON.parse(categories_name);
+
     const newDescribe = new Describe({
       name,
       folder,
-      bbox,
+      bbox: bboxArray,
+      categories_name: cateroriesArray,
       describe: describeArray,
     });
     await newDescribe.save();
@@ -120,8 +125,10 @@ async function getDescribeByName(req, res) {
 
 async function updateDescribe(req, res) {
   try {
-    const { name, folder, describe } = req.body;
+    const { name, folder, describe, bbox, categories_name } = req.body;
     const describeArray = JSON.parse(describe);
+    const bboxArray = JSON.parse(bbox);
+    const cateroriesArray = JSON.parse(categories_name);
 
     // Find the document by name
     let existingDescribe = await Describe.findOne({
@@ -135,6 +142,8 @@ async function updateDescribe(req, res) {
 
     // Update the describe field with the new value
     existingDescribe.describe = describeArray;
+    existingDescribe.bbox = bboxArray;
+    existingDescribe.categories_name = cateroriesArray;
     existingDescribe.folder = folder;
 
     // Save the updated document
