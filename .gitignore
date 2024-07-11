@@ -20,3 +20,5 @@ server/config/config.js
 
 # cache
 /cache/
+
+package-lock.json
