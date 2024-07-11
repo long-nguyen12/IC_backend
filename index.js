@@ -1,8 +1,6 @@
 // server.js
 const express = require("express");
 const mongoose = require("mongoose");
-const userRoutes = require("./server/api/users/users.router");
-const fileRoutes = require("./server/api/file/file.router");
 const cors = require("cors");
 const router = require("./server/router");
 const bodyParser = require("body-parser");
@@ -26,7 +24,7 @@ mongoose
 app.use("/api", router);
 // app.use("/api", fileRoutes);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8000;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
