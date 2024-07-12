@@ -69,21 +69,24 @@ exports.getAllImageName = async (req, res) => {
 // };
 
 exports.viewImage = async (req, res) => {
-  // res.json({ folder: req.query.folder, name: req.query.name });
-  const file = await getImagePath(
-    req.query.name,
-    path.join("uploads", req.query.folder)
-  );
-  const type = mime[path.extname(file).slice(1)] || "text/plain";
-  const s = fs.createReadStream(file);
-  s.on("open", function () {
-    res.set("Content-Type", type);
-    s.pipe(res);
-  });
-  s.on("error", function () {
-    res.set("Content-Type", "text/plain");
-    res.status(404).end("Not found");
-  });
+  try {
+    const file = await getImagePath(
+      req.query.name,
+      path.join("uploads", req.query.folder)
+    );
+    const type = mime[path.extname(file).slice(1)] || "text/plain";
+    const s = fs.createReadStream(file);
+    s.on("open", function () {
+      res.set("Content-Type", type);
+      s.pipe(res);
+    });
+    s.on("error", function () {
+      res.set("Content-Type", "text/plain");
+      res.status(404).end("Not found");
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 };
 
 const getImagePath = async (fileName = "", filesDir = "") => {
