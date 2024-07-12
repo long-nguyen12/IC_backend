@@ -46,105 +46,105 @@ exports.getFileByFolder = async (req, res) => {
     }
     // ----------------------------- SHOULD MOVE TO ANOTHER FILE -------------------------------
     // Check if folder have a JSON file
-    const fileJSON = await File.find({
-      folder,
-      name: { $regex: /\.(json)$/i },
-    });
-    fileJSON.map((item) => {
-      var obj;
-      fs.readFile(
-        path.join("uploads", item.folder, item.name),
-        "utf8",
-        function (err, data) {
-          if (err) throw err;
-          obj = JSON.parse(data);
-          obj.categories.forEach(async (jsonCategory) => {
-            try {
-              // Check if the category already exists for the current folder
-              const existingCategory = await Categories.findOne({
-                folder: item.name.split("/")[0],
-                categories_name: jsonCategory.name,
-              });
+    // const fileJSON = await File.find({
+    //   folder,
+    //   name: { $regex: /\.(json)$/i },
+    // });
+    // fileJSON.map((item) => {
+    //   var obj;
+    //   fs.readFile(
+    //     path.join("uploads", item.folder, item.name),
+    //     "utf8",
+    //     function (err, data) {
+    //       if (err) throw err;
+    //       obj = JSON.parse(data);
+    //       obj.categories.forEach(async (jsonCategory) => {
+    //         try {
+    //           // Check if the category already exists for the current folder
+    //           const existingCategory = await Categories.findOne({
+    //             folder: item.name.split("/")[0],
+    //             categories_name: jsonCategory.name,
+    //           });
 
-              // If the category does not exist, create and save it
-              if (!existingCategory) {
-                const category = new Categories({
-                  categories_id: jsonCategory.id,
-                  categories_name: jsonCategory.name,
-                  supercategory: jsonCategory.supercategory,
-                  folder: item.name.split("/")[0],
-                });
-                await category.save();
-                console.log(
-                  `Category '${jsonCategory.name}' saved successfully.`
-                );
-              }
-            } catch (error) {
-              console.error("Error saving category:", error);
-            }
-          });
-          obj.images.forEach(async (image) => {
-            const describe = {
-              name: item.name.split("/")[0] + "/" + image.file_name,
-              folder: item.folder,
-              bbox: [],
-              describe: [],
-              categories_id: [],
-              categories_name: [],
-            };
-            const annotations = obj.annotations.filter(
-              (annotation) => annotation.image_id === image.id
-            );
+    //           // If the category does not exist, create and save it
+    //           if (!existingCategory) {
+    //             const category = new Categories({
+    //               categories_id: jsonCategory.id,
+    //               categories_name: jsonCategory.name,
+    //               supercategory: jsonCategory.supercategory,
+    //               folder: item.name.split("/")[0],
+    //             });
+    //             await category.save();
+    //             console.log(
+    //               `Category '${jsonCategory.name}' saved successfully.`
+    //             );
+    //           }
+    //         } catch (error) {
+    //           console.error("Error saving category:", error);
+    //         }
+    //       });
+    //       obj.images.forEach(async (image) => {
+    //         const describe = {
+    //           name: item.name.split("/")[0] + "/" + image.file_name,
+    //           folder: item.folder,
+    //           bbox: [],
+    //           describe: [],
+    //           categories_id: [],
+    //           categories_name: [],
+    //         };
+    //         const annotations = obj.annotations.filter(
+    //           (annotation) => annotation.image_id === image.id
+    //         );
 
-            annotations.forEach(async (annotation) => {
-              if (annotation.caption || annotation.segment_caption) {
-                describe.describe.push({
-                  caption: annotation?.caption?.toString(),
-                  segment_caption: annotation?.segment_caption?.toString(),
-                });
-                const imgFile = await File.findOne({
-                  folder,
-                  name: { $regex: image.file_name, $options: "i" },
-                });
-                if (imgFile) {
-                  imgFile.haveCaption = true;
-                  await imgFile.save();
-                }
-              }
-              if (annotation.bbox) {
-                describe.bbox.push(annotation.bbox);
-              }
-              const category = obj.categories.find(
-                (category) => category.id === annotation.category_id
-              );
-              if (category) {
-                describe.categories_id.push(category.id.toString());
-                describe.categories_name.push(category.name);
-              }
-            });
-            try {
-              const existingDescribe = await Describe.findOne({
-                name: describe.name,
-              });
-              if (!existingDescribe) {
-                await Describe.create(describe);
-                // await Categories.create(folderCategory);
-              }
-            } catch (error) {
-              console.error("Error saving describe:", error);
-            }
-          });
-        }
-      );
-    });
+    //         annotations.forEach(async (annotation) => {
+    //           if (annotation.caption || annotation.segment_caption) {
+    //             describe.describe.push({
+    //               caption: annotation?.caption?.toString(),
+    //               segment_caption: annotation?.segment_caption?.toString(),
+    //             });
+    //             const imgFile = await File.findOne({
+    //               folder,
+    //               name: { $regex: image.file_name, $options: "i" },
+    //             });
+    //             if (imgFile) {
+    //               imgFile.haveCaption = true;
+    //               await imgFile.save();
+    //             }
+    //           }
+    //           if (annotation.bbox) {
+    //             describe.bbox.push(annotation.bbox);
+    //           }
+    //           const category = obj.categories.find(
+    //             (category) => category.id === annotation.category_id
+    //           );
+    //           if (category) {
+    //             describe.categories_id.push(category.id.toString());
+    //             describe.categories_name.push(category.name);
+    //           }
+    //         });
+    //         try {
+    //           const existingDescribe = await Describe.findOne({
+    //             name: describe.name,
+    //           });
+    //           if (!existingDescribe) {
+    //             await Describe.create(describe);
+    //             // await Categories.create(folderCategory);
+    //           }
+    //         } catch (error) {
+    //           console.error("Error saving describe:", error);
+    //         }
+    //       });
+    //     }
+    //   );
+    // });
     // ----------------------------- SHOULD MOVE TO ANOTHER FILE -------------------------------
 
     // ---------------------------------
-    if (file.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Chưa có ảnh nào trong mục này có mô tả!" });
-    }
+    // if (file.length === 0) {
+    //   return res
+    //     .status(404)
+    //     .json({ message: "Chưa có ảnh nào trong mục này có mô tả!" });
+    // }
 
     res.status(200).json({ file: sortFile });
   } catch (error) {
