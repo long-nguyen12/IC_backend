@@ -7,7 +7,7 @@ const unzipper = require("unzipper");
 const unrar = require("unrar");
 const { createExtractorFromFile } = require("node-unrar-js");
 const AdmZip = require("adm-zip");
-
+const HistoryController = require("../history/history.controller");
 exports.getFileByFolder = async (req, res) => {
   try {
     const { folder, page = 1, limit = 25, sort, includes } = req.query;
@@ -166,11 +166,11 @@ exports.updateFileInfo = async (req, res) => {
   }
 };
 
-exports.uploadFile = async (req, res) => {
+exports.uploadFile = async (req, res ) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
   }
-
+  console.log("uerUpdate", req.user)
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
   const filePath = req.file.path;
   const fileName = path.basename(filePath, path.extname(filePath));
@@ -190,14 +190,18 @@ exports.uploadFile = async (req, res) => {
     imagePaths.map((item) => {
       const newFile = new File({
         name: item,
-        folder: fileName,
+        folder: fileName,     
         path: req.file.path,
       });
-      newFile.save();
+      newFile.save()
+        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${fileName}`, item) )
+        .catch((error) => console.error(`Error saving file ${item}:`, error));
     });
+
+
     res.status(201).send("File uploaded successfully.");
   } catch (err) {
-    res.status(400).json({ message: `ERROR: ${err.message}` });
+    res.status(400).json({ message: `ERROR: ${err.message}`});
   }
 };
 

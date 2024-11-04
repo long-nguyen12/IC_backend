@@ -5,10 +5,12 @@ const folderRoutes = require("./api/folder/folder.router");
 const imageRoutes = require("./api/image/image.router");
 const describeRoutes = require("./api/describe/describe.router");
 const categoriesRoutes = require("./api/categories/categories.router");
+const history = require("./api/history/history.router");
 const authenticateToken = require("./auth");
 const router = express.Router();
 
 router.use("/users", userRoutes);
+router.use("/log", history);
 router.use("/file", authenticateToken, fileRoutes);
 router.use("/folder", authenticateToken, folderRoutes);
 router.use("/describe", authenticateToken, describeRoutes);

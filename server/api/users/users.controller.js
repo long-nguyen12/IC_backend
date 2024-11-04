@@ -47,6 +47,7 @@ async function createUser(req, res) {
 }
 
 async function loginUser(req, res) {
+ 
   try {
     const { userName, password } = req.body;
     const user = await User.findOne({ userName });
@@ -64,7 +65,19 @@ async function loginUser(req, res) {
         expiresIn: "24h",
       }
     );
-    res.json({ token });
+
+    console.log("đasadsadsa")
+    res.cookie('authToken', token, {
+      httpOnly: true, // Cookie không thể truy cập từ JavaScript
+      secure: false,  // Đặt true nếu bạn chạy trên HTTPS (để dễ dàng phát triển, có thể để false)
+      maxAge: 24 * 60 * 60 * 1000, // Cookie tồn tại trong 1 ngày
+      sameSite: 'Strict', // Cần thiết để cho phép gửi cookie cross-origin
+      Domain:'localhost', // Thay thế bằng tên miền của bạn
+      path: '/',
+    });
+
+
+    res.send('oke');
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -72,6 +85,7 @@ async function loginUser(req, res) {
 
 const getUserList = async (req, res) => {
   try {
+  
     const users = await User.find({});
     res.status(200).json(users);
   } catch (error) {
@@ -123,4 +137,19 @@ const editUserRole = async (req, res) => {
   }
 };
 
-module.exports = { createUser, loginUser, getUserList, editUserRole };
+const Logout = async (req, res) => {
+  
+  try {
+    res.cookie('authToken', '', {
+        expires: new Date(0),
+        httpOnly: true, 
+        secure: true    
+    });
+    res.status(304).json({ error: "Internal server error" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+module.exports = { createUser, loginUser, getUserList, editUserRole,Logout };

@@ -18,6 +18,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+
+    avartar : {
+      type: String,
+      max: 50,
+    },
     role: {
       type: [String],
       enum: ["upload", "edit", "delete", "admin"],
