@@ -6,6 +6,7 @@ const User = require("./users.model");
 const {
   createUser,
   loginUser,
+  Logout,
   getUserList,
   editUserRole,
 } = require("./users.controller");
@@ -14,7 +15,8 @@ const upload = multer();
 
 router.post("/register", upload.none(), createUser);
 router.post("/login", loginUser);
-router.get("/user", getUserList);
+router.get("/logout", Logout);
+router.get("/user",authenticateToken,getUserList);
 router.put(
   "/user",
   authenticateToken,

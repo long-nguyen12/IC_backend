@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const fileController = require("./file.controller");
 const authenticateToken = require("../../auth");
-
+const HistoryController = require("../history/history.controller");
 const router = express.Router();
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -20,6 +20,7 @@ router.put(
   "/update-file-info",
   authenticateToken,
   fileController.updateFileInfo
+
 );
 router.post(
   "/upload",
@@ -36,6 +37,7 @@ router.post(
   },
   upload.single("file"),
   fileController.uploadFile
+  
 );
 router.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const multer = require('multer');
 
 let mime = {
   html: "text/html",
@@ -88,6 +89,20 @@ exports.viewImage = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+
+
+
+exports.upload = async (req,res)=>{
+  console.log("reqreqreqreqreq",req.file)
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  res.send(`File uploaded successfully: ${req.file.path}`)
+};
+
+
+
 
 const getImagePath = async (fileName = "", filesDir = "") => {
   if (!fileName) return null;
