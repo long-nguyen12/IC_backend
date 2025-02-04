@@ -9,6 +9,7 @@ const {
   Logout,
   getUserList,
   editUserRole,
+  UpdateProFile,
 } = require("./users.controller");
 const authenticateToken = require("../../auth");
 const upload = multer();
@@ -17,6 +18,9 @@ router.post("/register", upload.none(), createUser);
 router.post("/login", loginUser);
 router.get("/logout", Logout);
 router.get("/user",authenticateToken,getUserList);
+router.get("/update",authenticateToken, UpdateProFile);
+
+
 router.put(
   "/user",
   authenticateToken,

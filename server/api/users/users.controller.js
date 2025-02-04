@@ -137,6 +137,31 @@ const editUserRole = async (req, res) => {
   }
 };
 
+const UpdateProFile = async (req, res) => {
+  // const { userId, role } = req.body;
+  console.log(req.body)
+  try {
+    // const user = await User.findById(userId);
+    // const roleArray = JSON.parse(role);
+    // if (!user) {
+    //   return res.status(404).json({ error: "User not found" });
+    // }
+
+    // Update the user's roles to match the provided array
+    // user.role = roleArray;
+
+    // // Save the updated user document
+    // await user.save();
+
+    res.status(200).json({ oke: "Internal server error" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+
+
 const Logout = async (req, res) => {
   
   try {
@@ -152,4 +177,4 @@ const Logout = async (req, res) => {
 };
 
 
-module.exports = { createUser, loginUser, getUserList, editUserRole,Logout };
+module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile };
