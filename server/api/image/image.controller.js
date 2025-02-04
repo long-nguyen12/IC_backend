@@ -98,7 +98,7 @@ exports.upload = async (req,res)=>{
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
-  res.send(`File uploaded successfully: ${req.file.path}`)
+  res.status(200).json({ file: `http://localhost:7000/${req.file.filename}` });
 };
 
 
