@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 
 function authenticateToken(req, res, next) {
 
- 
+
   const authHeader = req.headers["authorization"];
   // const token = authHeader && authHeader.split(" ")[1];
   const token = req.cookies.authToken
@@ -17,7 +17,7 @@ function authenticateToken(req, res, next) {
       }
       return res.status(403).json({ error: "Forbidden" });
     }
-    console.log("user",user)
+    // console.log("user",user)
     req.user = user;
     next();
   });

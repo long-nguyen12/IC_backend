@@ -3,12 +3,10 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const imageController = require("./image.controller");
-
-
-
-
-
 const router = express.Router();
+
+
+
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
