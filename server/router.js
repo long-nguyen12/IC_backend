@@ -12,7 +12,7 @@ const router = express.Router();
 router.use("/users", userRoutes);
 router.use("/log", history);
 router.use("/file", authenticateToken, fileRoutes);
-router.use("/folder", authenticateToken, folderRoutes);
+router.use("/uploads", authenticateToken, folderRoutes);
 router.use("/describe", authenticateToken, describeRoutes);
 router.use("/image", imageRoutes);
 router.use("/categories", categoriesRoutes);

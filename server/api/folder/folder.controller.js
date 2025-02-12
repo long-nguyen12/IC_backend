@@ -2,6 +2,66 @@ const fs = require("fs");
 const path = require("path");
 
 
+const getFolderData = (dir) => {
+  try {
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+
+    // Lấy danh mục con
+    const children = items
+      .filter((item) => item.isDirectory())
+      .map((folder) => {
+        const folderPath = path.join(dir, folder.name);
+        return {
+          name: folder.name,
+          path: folderPath,
+          children: getFolderData(folderPath).children,
+          images: getFolderData(folderPath).images, // Lọc hình ảnh
+          otherFiles: getFolderData(folderPath).otherFiles, // Lọc file khác
+        };
+      });
+
+    // Lấy file và phân loại
+    const images = [];
+    const otherFiles = [];
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
+
+    items.filter((item) => item.isFile()).forEach((file) => {
+      const filePath = path.join(dir, file.name);
+      const ext = path.extname(file.name).toLowerCase();
+
+      if (imageExtensions.includes(ext)) {
+        images.push({ name: file.name, path: filePath });
+      } else {
+        otherFiles.push({ name: file.name, path: filePath });
+      }
+    });
+
+    return { name: path.basename(dir), path: dir, children, images, otherFiles };
+  } catch (err) {
+    console.error("Lỗi đọc thư mục:", err);
+    return { name: path.basename(dir), path: dir, children: [], images: [], otherFiles: [] };
+  }
+};
+
+
+
+
+exports.getData = (req, res) => {
+  // console.log("req",req)
+  let folderPath = req.params.folderPath || "";
+  
+  console.log("folderPath----------------",folderPath)
+
+  if (!fs.existsSync(folderPath)) {
+    return res.status(404).json({ message: "Thư mục không tồn tại." });
+  }
+
+  const data = getFolderData(folderPath);
+  res.status(200).json({ message: "Danh sách thư mục và file.", data });
+};
+
+
+
 exports.getFolder = async (req, res) => {
   try {
     // Check if the "uploads" directory exists, if not, create it
@@ -53,4 +113,69 @@ exports.getFolder = async (req, res) => {
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+};
+
+
+exports.getALLFolder = async (req, res) => {
+
+  try {
+    const uploadsDir = "uploads";
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir);
+    }
+
+    // Hàm đệ quy để xây dựng cây danh mục, kèm danh sách file trong từng thư mục
+    const buildFolderTree = (dir, parentPath = dir) => {
+      try {
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+    
+        // Lấy danh mục con
+        const children = items
+          .filter((item) => item.isDirectory())
+          .map((folder) => {
+            const folderPath = path.join(dir, folder.name);
+            return {
+              name: folder.name,
+              path: folderPath,
+              children: getFolderData(folderPath).children,
+              images: getFolderData(folderPath).images, // Lọc hình ảnh
+              otherFiles: getFolderData(folderPath).otherFiles, // Lọc file khác
+            };
+          });
+    
+        // Lấy file và phân loại
+        const images = [];
+        const otherFiles = [];
+        const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
+    
+        items.filter((item) => item.isFile()).forEach((file) => {
+          const filePath = path.join(dir, file.name);
+          const ext = path.extname(file.name).toLowerCase();
+    
+          if (imageExtensions.includes(ext)) {
+            images.push({ name: file.name, path: filePath });
+          } else {
+            otherFiles.push({ name: file.name, path: filePath });
+          }
+        });
+    
+        return { name: path.basename(dir), path: dir, children, images, otherFiles };
+      } catch (err) {
+        console.error("Lỗi đọc thư mục:", err);
+        return { name: path.basename(dir), path: dir, children: [], images: [], otherFiles: [] };
+      }
+    };
+
+    // Xây dựng cây danh mục từ thư mục "uploads"
+    const folderTree = buildFolderTree(uploadsDir);
+
+    res.status(200).json({
+      message: "Cây danh mục kèm file.",
+      data: folderTree,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi hệ thống", error: err.message });
+  }
+
+  
 };

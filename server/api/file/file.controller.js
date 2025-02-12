@@ -8,10 +8,32 @@ const unrar = require("unrar");
 const { createExtractorFromFile } = require("node-unrar-js");
 const AdmZip = require("adm-zip");
 const HistoryController = require("../history/history.controller");
+
+
+exports.getFoderAll = async (req, res) => {
+  try {
+    const { folder, name } = req.query;
+    const file = await File.find();
+    console.log("file",file)
+    file.haveCaption = true;
+    await file.save();
+    res.status(200).message("Thêm mô tả thành công!");
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
 exports.getFileByFolder = async (req, res) => {
   try {
     const { folder, page = 1, limit = 25, sort, includes } = req.query;
-
+    console.log("foder",req.query)
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
 
@@ -155,9 +177,7 @@ exports.getFileByFolder = async (req, res) => {
 exports.updateFileInfo = async (req, res) => {
   try {
     const { folder, name } = req.query;
-
     const file = await File.findOne({ folder, name });
-
     file.haveCaption = true;
     await file.save();
     res.status(200).message("Thêm mô tả thành công!");
@@ -193,6 +213,7 @@ exports.uploadFile = async (req, res ) => {
         folder: fileName,     
         path: req.file.path,
       });
+      console.log("newFile",newFile)
       newFile.save()
         .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${fileName}`, item) )
         .catch((error) => console.error(`Error saving file ${item}:`, error));

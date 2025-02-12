@@ -18,7 +18,7 @@ router.post("/register", upload.none(), createUser);
 router.post("/login", loginUser);
 router.get("/logout", Logout);
 router.get("/user",authenticateToken,getUserList);
-router.get("/update",authenticateToken, UpdateProFile);
+router.put("/update",authenticateToken, UpdateProFile);
 
 
 router.put(

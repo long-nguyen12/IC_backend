@@ -22,12 +22,15 @@ router.put(
   fileController.updateFileInfo
 
 );
+
+router.get("/foder", authenticateToken, fileController.getFoderAll);
+
+
 router.post(
   "/upload",
   authenticateToken,
   (req, res, next) => {
     console.log(req.user.role);
-    // Check if the user has the necessary role to access this route
     if (
       !(req.user.role.includes("upload") || req.user.role.includes("admin"))
     ) {
@@ -39,6 +42,6 @@ router.post(
   fileController.uploadFile
   
 );
-router.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 module.exports = router;

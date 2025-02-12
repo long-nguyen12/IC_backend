@@ -138,22 +138,33 @@ const editUserRole = async (req, res) => {
 };
 
 const UpdateProFile = async (req, res) => {
-  // const { userId, role } = req.body;
-  console.log(req.body)
+  
+  console.log("requet user",req.user)
+  console.log("requet update",req.body.avatar)
   try {
-    // const user = await User.findById(userId);
-    // const roleArray = JSON.parse(role);
-    // if (!user) {
-    //   return res.status(404).json({ error: "User not found" });
+    const user = await User.findById(req.user.userId);
+    console.log("user--------------",user)
+    // if (!user.avatar) {
+    //   console.log("*********************")
+    //   await user.updateMany({}, { $set: { avatar: req.body.avatar } });
+    //   user.avatar = req.body.avatar;
+    //   await user.save();
+    //   return res.status(200).json({ oke: "okiee" });
     // }
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      { 
+        avartar: req.body.avatar,
+        name: "admimmmmm",
+       },
+      { new: true }  // Trả về tài liệu đã cập nhật
+    );
 
-    // Update the user's roles to match the provided array
-    // user.role = roleArray;
 
-    // // Save the updated user document
-    // await user.save();
-
-    res.status(200).json({ oke: "Internal server error" });
+    // user.avartar = req.body.avatar;
+    // console.log("user$$$$$$$$$$$$$$",user)
+    await updatedUser.save();
+    res.status(200).json( updatedUser );
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
