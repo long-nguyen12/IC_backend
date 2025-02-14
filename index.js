@@ -16,8 +16,9 @@ app.use(cors({
   credentials: true // Cho phép gửi cookies
 }));
 
-app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+
 mongoose
   .connect(
     "mongodb+srv://huygaming04:dnhuy2012@imagecaptioning.rzqchro.mongodb.net/?retryWrites=true&w=majority&appName=ImageCaptioning"

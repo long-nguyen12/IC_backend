@@ -5,6 +5,9 @@ const FileSchema = new mongoose.Schema({
   folder: String,
   path: String,
   detection_name: String,
+  describe: { type: String, default: null },
+  caption: mongoose.Schema.Types.Mixed,
+  bbox: { type: Array,default: [], required: false },
   haveCaption: { type: Boolean, default: false },
 });
 

@@ -24,12 +24,6 @@ exports.getFoderAll = async (req, res) => {
 };
 
 
-
-
-
-
-
-
 exports.getFileByFolder = async (req, res) => {
   try {
     const { folder, page = 1, limit = 25, sort, includes } = req.query;
@@ -52,6 +46,8 @@ exports.getFileByFolder = async (req, res) => {
       name: { $regex: nameRegex },
     });
     let sortFile;
+
+    console.log("file",file)
 
     if (sort === "asc") {
       sortFile = file
@@ -176,12 +172,24 @@ exports.getFileByFolder = async (req, res) => {
 
 exports.updateFileInfo = async (req, res) => {
   try {
-    const { folder, name } = req.query;
-    const file = await File.findOne({ folder, name });
-    file.haveCaption = true;
-    await file.save();
-    res.status(200).message("Thêm mô tả thành công!");
+    // const { folder, name , Describe } = req.query;
+
+    console.log("--------type---------", typeof req.body.caption)
+    
+    console.log("Headers nhận được:", req.headers);
+    console.log("Body nhận được:", req.body);
+      
+  
+    const file = await File.findById(req.body.id);
+    // file.haveCaption = true;
+    // file.Describe = Describe;
+    file.caption  = JSON.parse(req.body.caption) 
+    file.markModified("data")
+    await file.save("file",file);
+    console.log("file",file)
+    res.status(200).json({success:true, file:file});
   } catch (error) {
+
     res.status(500).json({ error: error.message });
   }
 };
@@ -325,3 +333,26 @@ async function extractImagesFromRar(filePath, folderName) {
   }
   return imagePaths;
 }
+
+
+
+// eleteAllData()
+
+async function eleteAllData(){
+  try {
+    await File.deleteMany({});
+    console.log("Đã xóa toàn bộ dữ liệu trong collection!");
+  } catch (error) {
+    console.error("Lỗi khi xóa dữ liệu:", error);
+  }
+};
+
+Logdata()
+async function Logdata(){
+  try {
+    let ds = await File.find({});
+    console.log("datat",ds);
+  } catch (error) {
+    console.error("Lỗi khi xóa dữ liệu:", error);
+  }
+};

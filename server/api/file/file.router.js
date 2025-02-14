@@ -25,6 +25,7 @@ router.put(
 
 router.get("/foder", authenticateToken, fileController.getFoderAll);
 
+router.post("/updatefile",authenticateToken, fileController.updateFileInfo)
 
 router.post(
   "/upload",
