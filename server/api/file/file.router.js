@@ -26,6 +26,8 @@ router.put(
 router.get("/foder", authenticateToken, fileController.getFoderAll);
 
 router.post("/updatefile",authenticateToken, fileController.updateFileInfo)
+router.post("/singbox",authenticateToken, fileController.SendAI)
+
 
 router.post(
   "/upload",
