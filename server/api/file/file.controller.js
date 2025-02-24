@@ -8,13 +8,13 @@ const unrar = require("unrar");
 const { createExtractorFromFile } = require("node-unrar-js");
 const AdmZip = require("adm-zip");
 const HistoryController = require("../history/history.controller");
-
+const axios = require("axios");
+const FormData = require("form-data");
 
 exports.getFoderAll = async (req, res) => {
   try {
     const { folder, name } = req.query;
     const file = await File.find();
-    console.log("file",file)
     file.haveCaption = true;
     await file.save();
     res.status(200).message("Thêm mô tả thành công!");
@@ -22,6 +22,36 @@ exports.getFoderAll = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.SendAI = async (req, res) => {
+  try {
+    const fileName = req.body.dectect_path;
+    
+
+    const filePath = path.join(__dirname,"..","..","..",fileName);
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(filePath));
+    axios
+    .post("http://ai-service.ailabs.io.vn:5000/v1/api/detection", formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    })
+    .then((response) => {
+      console.log("Upload thành công:", response.data);
+      res.status(200).json(response.data)
+    })
+    .catch((error) => {
+      console.error("Lỗi upload:", error.message);
+      res.status(500).json({ error: error.message });
+    });
+    
+   
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 
 exports.getFileByFolder = async (req, res) => {
@@ -336,6 +366,11 @@ async function extractImagesFromRar(filePath, folderName) {
 
 
 
+
+
+
+
+
 // eleteAllData()
 
 async function eleteAllData(){
@@ -347,7 +382,7 @@ async function eleteAllData(){
   }
 };
 
-Logdata()
+// Logdata()
 async function Logdata(){
   try {
     let ds = await File.find({});
