@@ -25,6 +25,7 @@ exports.getFoderAll = async (req, res) => {
 
 exports.SendAI = async (req, res) => {
   try {
+    console.log("req.body",req.body)
     const fileName = req.body.dectect_path;
     
 
@@ -37,9 +38,18 @@ exports.SendAI = async (req, res) => {
         ...formData.getHeaders(),
       },
     })
-    .then((response) => {
+    .then( async (response) => {
       console.log("Upload thành công:", response.data);
-      res.status(200).json(response.data)
+
+      const fileAI = await File.findOneAndUpdate(
+        { _id: req.body.id },
+        { $set: { describe: response.data.dectect_path} },
+        { returnDocument: "after" } 
+      );
+      
+
+
+      res.status(200).json(fileAI)
     })
     .catch((error) => {
       console.error("Lỗi upload:", error.message);
