@@ -27,13 +27,15 @@ exports.SendAI = async (req, res) => {
   try {
     console.log("req.body",req.body)
     const fileName = req.body.dectect_path;
-    
-
     const filePath = path.join(__dirname,"..","..","..",fileName);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
     const formData = new FormData();
     formData.append("file", fs.createReadStream(filePath));
-    axios
-    .post("http://ai-service.ailabs.io.vn:5000/v1/api/detection", formData, {
+    await axios.post("http://icai.ailabs.io.vn/v1/api/detection", formData, {
       headers: {
         ...formData.getHeaders(),
       },
@@ -46,22 +48,16 @@ exports.SendAI = async (req, res) => {
         { $set: { describe: response.data.dectect_path} },
         { returnDocument: "after" } 
       );
-      
-
-
       res.status(200).json(fileAI)
     })
     .catch((error) => {
       console.error("Lỗi upload:", error.message);
       res.status(500).json({ error: error.message });
     });
-    
-   
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 
 exports.getFileByFolder = async (req, res) => {
