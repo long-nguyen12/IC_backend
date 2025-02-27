@@ -21,7 +21,7 @@ app.use(express.json());
 
 mongoose
   .connect(
-    "mongodb+srv://huygaming04:dnhuy2012@imagecaptioning.rzqchro.mongodb.net/?retryWrites=true&w=majority&appName=ImageCaptioning"
+    "mongodb://root:root1234@ailabs.ddns.net:27017/ic?connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-256"
   )
   .then(() => {
     console.log("Connected to MongoDB");
