@@ -37,7 +37,7 @@ exports.SendAI = async (req, res) => {
     formData.append("file", fs.createReadStream(filePath));
     await axios.post("http://icai.ailabs.io.vn/v1/api/detection", formData, {
       headers: {
-        ...formData.getHeaders(),
+        ...formData.getHeaders(), 
       },
     })
     .then( async (response) => {
@@ -388,7 +388,7 @@ async function eleteAllData(){
   }
 };
 
-// Logdata()
+Logdata()
 async function Logdata(){
   try {
     let ds = await File.find({});
