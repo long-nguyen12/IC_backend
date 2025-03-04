@@ -6,7 +6,7 @@ const User = require("./users.model");
 async function createUser(req, res) {
   try {
     const { userName, password, email } = req.body;
-
+    console.log("userName",userName)
     const validateEmployeename = async (name) => {
       let employee = await User.findOne({ userName });
       return employee ? false : true;
@@ -40,7 +40,7 @@ async function createUser(req, res) {
       role: ["edit"],
     });
     await user.save();
-    res.status(201).json({ message: "User created successfully" });
+    res.status(201).json({  user });
   } catch (error) {
     res.status(500).json({ error: error });
   }
@@ -87,6 +87,7 @@ const getUserList = async (req, res) => {
   try {
   
     const users = await User.find({});
+    console.log("users",users)
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
