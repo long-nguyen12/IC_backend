@@ -9,7 +9,7 @@ const {
   getAllDescribesByFolder,
 } = require("./describe.controller");
 const multer = require("multer");
-const authenticateToken = require("../../auth");
+const {authenticateToken} = require("../../auth");
 
 const upload = multer();
 

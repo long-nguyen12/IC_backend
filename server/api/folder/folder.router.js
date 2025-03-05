@@ -8,4 +8,6 @@ const router = express.Router();
 router.get("/all", folderController.getALLFolder);
 router.get("/:folderPath(*)?",folderController.getData);
 router.get("/foder",folderController.getData);
+router.get("/delete-folder/:folderName",folderController.deleteFolder);
+
 module.exports = router;

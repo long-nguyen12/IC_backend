@@ -10,8 +10,11 @@ const {
   getUserList,
   editUserRole,
   UpdateProFile,
+  DeletedUser
 } = require("./users.controller");
-const authenticateToken = require("../../auth");
+
+const { authenticateToken, verifyAdmin }  = require("../../auth");
+
 const upload = multer();
 
 router.post("/register", upload.none(), createUser);
@@ -19,7 +22,7 @@ router.post("/login", loginUser);
 router.get("/logout", Logout);
 router.get("/user",authenticateToken,getUserList);
 router.put("/update",authenticateToken, UpdateProFile);
-
+router.delete("/delete/:id",verifyAdmin, DeletedUser);
 
 router.put(
   "/user",

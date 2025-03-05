@@ -83,7 +83,6 @@ async function loginUser(req, res) {
 
 const getUserList = async (req, res) => {
   try {
-  
     const users = await User.find({});
     res.status(200).json(users);
   } catch (error) {
@@ -165,11 +164,22 @@ const UpdateProFile = async (req, res) => {
   }
 };
 
+const DeletedUser = async (req, res) => {
+  try {
+    const id  = req.params.id;
 
-
+    const deletedUser = await User.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ error: "Người dùng không tồn tại" });
+    }
+    return res.status(200).json({ message: "Xóa người dùng thành công", user: deletedUser });
+  } catch (error) {
+    console.error("Lỗi khi xóa người dùng:", error.message);
+    return res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
+  }
+};
 
 const Logout = async (req, res) => {
-  
   try {
     res.cookie('authToken', '', {
         expires: new Date(0),
@@ -183,4 +193,4 @@ const Logout = async (req, res) => {
 };
 
 
-module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile };
+module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile,DeletedUser };

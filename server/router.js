@@ -6,7 +6,7 @@ const imageRoutes = require("./api/image/image.router");
 const describeRoutes = require("./api/describe/describe.router");
 const categoriesRoutes = require("./api/categories/categories.router");
 const history = require("./api/history/history.router");
-const authenticateToken = require("./auth");
+const { authenticateToken }  = require("./auth");
 const router = express.Router();
 
 router.use("/users", userRoutes);
