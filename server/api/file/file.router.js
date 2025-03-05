@@ -33,7 +33,6 @@ router.post(
   "/upload",
   authenticateToken,
   (req, res, next) => {
-    console.log(req.user.role);
     if (
       !(req.user.role.includes("upload") || req.user.role.includes("admin"))
     ) {

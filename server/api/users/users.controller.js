@@ -6,7 +6,6 @@ const User = require("./users.model");
 async function createUser(req, res) {
   try {
     const { userName, password, email } = req.body;
-    console.log("userName",userName)
     const validateEmployeename = async (name) => {
       let employee = await User.findOne({ userName });
       return employee ? false : true;
@@ -66,7 +65,6 @@ async function loginUser(req, res) {
       }
     );
 
-    console.log("đasadsadsa")
     res.cookie('authToken', token, {
       httpOnly: true, // Cookie không thể truy cập từ JavaScript
       secure: false,  // Đặt true nếu bạn chạy trên HTTPS (để dễ dàng phát triển, có thể để false)
@@ -87,7 +85,6 @@ const getUserList = async (req, res) => {
   try {
   
     const users = await User.find({});
-    console.log("users",users)
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -140,11 +137,8 @@ const editUserRole = async (req, res) => {
 
 const UpdateProFile = async (req, res) => {
   
-  console.log("requet user",req.user)
-  console.log("requet update",req.body.avatar)
   try {
     const user = await User.findById(req.user.userId);
-    console.log("user--------------",user)
     // if (!user.avatar) {
     //   console.log("*********************")
     //   await user.updateMany({}, { $set: { avatar: req.body.avatar } });

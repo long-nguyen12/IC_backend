@@ -12,7 +12,7 @@ var path = require('path')
 const app = express();
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:3000', // Địa chỉ client
+  origin: 'http://ic.ailabs.io.vn', // Địa chỉ client
   credentials: true // Cho phép gửi cookies
 }));
 

@@ -47,10 +47,8 @@ const getFolderData = (dir) => {
 
 
 exports.getData = (req, res) => {
-  // console.log("req",req)
   let folderPath = req.params.folderPath || "";
-  
-  console.log("folderPath----------------",folderPath)
+
 
   if (!fs.existsSync(folderPath)) {
     return res.status(404).json({ message: "Thư mục không tồn tại." });

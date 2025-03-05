@@ -29,6 +29,6 @@ router.post(
 router.get("/describe_all", getAllDescribes);
 router.get("/describe_all_by_folder", getAllDescribesByFolder);
 router.get("/describe", getDescribeByName);
-router.post("/create_json", upload.none(), getAllDataByFolder);
+router.get("/create_json", getAllDataByFolder);
 
 module.exports = router;

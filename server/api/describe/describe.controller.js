@@ -70,7 +70,6 @@ async function getAllDescribesByFolder(req, res) {
 async function createDescribe(req, res) {
   try {
     const { name, folder, describe, bbox, categories_name } = req.body;
-    console.log(bbox);
     let existingDescribe = await Describe.findOne({
       name: { $regex: name, $options: "i" },
     });
@@ -109,11 +108,9 @@ async function getDescribeByName(req, res) {
     if (!req.query.name) {
       res.status(400).message("Cần tên dữ liệu");
     }
-    // console.log(req.query.name);
     let describe = await Describe.findOne({
       name: { $regex: req.query.name, $options: "i" },
     });
-    // console.log(describe);
     if (!describe) {
       res.status(404).message("Không tìm thấy dữ liệu");
     }
@@ -159,32 +156,26 @@ async function updateDescribe(req, res) {
 
 async function getAllDataByFolder(req, res) {
   try {
-    const { folderName, nameSubFolder } = req.body;
-    // Assuming you're using Mongoose to interact with MongoDB
-    if (nameSubFolder !== "all") {
-      nameRegex = new RegExp(
-        "^" + nameSubFolder + "/.*\\.(jpg|png|jpeg)$",
-        "i"
-      );
-    } else {
-      nameRegex = /\.(jpg|png|jpeg)$/i;
-    }
-    const describeData = await Describe.find({
+    const { folderName } = req.query;
+
+    const describeData = await File.find({
       folder: folderName,
-      name: { $regex: nameRegex },
     });
 
     // Construct JSON object
     const data = {
-      info: {},
+      info: {
+        dataset: folderName,
+      },
       images: [],
       annotations: [],
     };
 
     // Iterate over each item in describeData
     for (const item of describeData) {
-      const { name, describe, bbox } = item;
+      const { name, caption } = item;
 
+      if (!caption) continue;
       // Assuming your images folder is in the same directory as this script
       const imagePath = path.join("uploads", folderName, name);
 
@@ -200,57 +191,57 @@ async function getAllDataByFolder(req, res) {
         });
       });
       const id = generateImageId(name);
+      let fileName = name.split("/").pop();
       data.images.push({
         id,
         width: dimensions.width,
         height: dimensions.height,
-        file_name: name.split("/")[1],
-        coco_url: name, // Assuming coco_url is the same as file_name
+        file_name: fileName,
+        coco_url: fileName, // Assuming coco_url is the same as file_name
       });
 
-      describe.forEach((caption, describeIndex) => {
-        if (bbox.length > 0) {
-          // If bbox exists, push annotation objects with bbox
-          bbox.forEach((bboxItem, bboxIndex) => {
-            data.annotations.push({
-              id: data.annotations.length + 1,
-              image_id: id, // ID of the last added image
-              bbox: bboxItem,
-              caption: caption.caption,
-              segment_caption: caption.segment_caption,
-            });
-          });
-        } else {
-          // If bbox doesn't exist, push annotation objects without bbox
-          data.annotations.push({
-            id: data.annotations.length + 1,
-            image_id: id, // ID of the last added image
-            caption: caption.caption,
-            segment_caption: caption.segment_caption,
-          });
-        }
+      Object.values(caption).forEach((value) => {
+        // if (bbox.length > 0) {
+        //   // If bbox exists, push annotation objects with bbox
+        //   bbox.forEach((bboxItem, bboxIndex) => {
+        //     data.annotations.push({
+        //       id: data.annotations.length + 1,
+        //       image_id: id, // ID of the last added image
+        //       bbox: bboxItem,
+        //       caption: caption.caption,
+        //       segment_caption: caption.segment_caption,
+        //     });
+        //   });
+        // } else {
+        // If bbox doesn't exist, push annotation objects without bbox
+
+        data.annotations.push({
+          id: data.annotations.length + 1,
+          image_id: id, // ID of the last added image
+          caption: value.caption,
+          segment_caption: value.segment_caption,
+        });
+        // }
       });
     }
 
     // Check if the 'output' folder exists, if not, create it
-    const outputFolderPath = path.join("uploads", "output");
-    if (!fs.existsSync("output")) {
-      fs.mkdirSync("output");
+    const outputFolderPath = path.join(path.resolve(__dirname, "../../.."), "output");
+    if (!fs.existsSync(outputFolderPath)) {
+      fs.mkdirSync(outputFolderPath);
     }
 
     // Write JSON object to file in the 'output' folder
-    const jsonFilePath = path.join(
-      "output",
-      `${folderName}_${nameSubFolder}.json`
-    );
+    const jsonFilePath = path.join(outputFolderPath, `${folderName}.json`);
     fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2));
 
     // Send JSON response
-    res.status(200).json({
-      success: true,
-      message: "JSON file saved successfully",
-      file: jsonFilePath,
-    });
+    // res.status(200).json({
+    //   success: true,
+    //   message: "JSON file saved successfully",
+    //   file: jsonFilePath,
+    // });
+    res.sendFile(jsonFilePath);
   } catch (error) {
     // Send error response
     res.status(500).json({ success: false, error: error.message });

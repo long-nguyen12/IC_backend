@@ -25,7 +25,6 @@ exports.getFoderAll = async (req, res) => {
 
 exports.SendAI = async (req, res) => {
   try {
-    console.log("req.body",req.body)
     const fileName = req.body.dectect_path;
     const filePath = path.join(__dirname,"..","..","..",fileName);
 
@@ -41,8 +40,6 @@ exports.SendAI = async (req, res) => {
       },
     })
     .then( async (response) => {
-      console.log("Upload thành công:", response.data);
-
       const fileAI = await File.findOneAndUpdate(
         { _id: req.body.id },
         { $set: { describe: response.data.dectect_path} },
@@ -63,7 +60,6 @@ exports.SendAI = async (req, res) => {
 exports.getFileByFolder = async (req, res) => {
   try {
     const { folder, page = 1, limit = 25, sort, includes } = req.query;
-    console.log("foder",req.query)
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
 
@@ -82,8 +78,6 @@ exports.getFileByFolder = async (req, res) => {
       name: { $regex: nameRegex },
     });
     let sortFile;
-
-    console.log("file",file)
 
     if (sort === "asc") {
       sortFile = file
@@ -209,20 +203,12 @@ exports.getFileByFolder = async (req, res) => {
 exports.updateFileInfo = async (req, res) => {
   try {
     // const { folder, name , Describe } = req.query;
-
-    console.log("--------type---------", typeof req.body.caption)
-    
-    console.log("Headers nhận được:", req.headers);
-    console.log("Body nhận được:", req.body);
-      
-  
     const file = await File.findById(req.body.id);
     // file.haveCaption = true;
     // file.Describe = Describe;
     file.caption  = JSON.parse(req.body.caption) 
     file.markModified("data")
     await file.save("file",file);
-    console.log("file",file)
     res.status(200).json({success:true, file:file});
   } catch (error) {
 
@@ -234,7 +220,6 @@ exports.uploadFile = async (req, res ) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
   }
-  console.log("uerUpdate", req.user)
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
   const filePath = req.file.path;
   const fileName = path.basename(filePath, path.extname(filePath));
@@ -257,7 +242,6 @@ exports.uploadFile = async (req, res ) => {
         folder: fileName,     
         path: req.file.path,
       });
-      console.log("newFile",newFile)
       newFile.save()
         .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${fileName}`, item) )
         .catch((error) => console.error(`Error saving file ${item}:`, error));
@@ -392,7 +376,6 @@ Logdata()
 async function Logdata(){
   try {
     let ds = await File.find({});
-    console.log("datat",ds);
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
