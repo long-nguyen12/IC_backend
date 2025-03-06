@@ -356,11 +356,6 @@ async function extractImagesFromRar(filePath, folderName) {
 
 
 
-
-
-
-
-
 // eleteAllData()
 
 async function eleteAllData(){
@@ -372,7 +367,7 @@ async function eleteAllData(){
   }
 };
 
-Logdata()
+// Logdata()
 async function Logdata(){
   try {
     let ds = await File.find({});

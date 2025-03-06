@@ -15,12 +15,11 @@ const getFolderData = (dir) => {
           name: folder.name,
           path: folderPath,
           children: getFolderData(folderPath).children,
-          images: getFolderData(folderPath).images, // Lọc hình ảnh
-          otherFiles: getFolderData(folderPath).otherFiles, // Lọc file khác
+          images: getFolderData(folderPath).images,
+          otherFiles: getFolderData(folderPath).otherFiles,
         };
       });
 
-    // Lấy file và phân loại
     const images = [];
     const otherFiles = [];
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
@@ -44,11 +43,8 @@ const getFolderData = (dir) => {
 };
 
 
-
-
 exports.getData = (req, res) => {
   let folderPath = req.params.folderPath || "";
-
 
   if (!fs.existsSync(folderPath)) {
     return res.status(404).json({ message: "Thư mục không tồn tại." });
@@ -113,16 +109,33 @@ exports.getFolder = async (req, res) => {
   }
 };
 
+exports.deleteFolder = async (req, res) => {
+  try {
+      const folderName = req.params.folderName;
+      const folderPath = path.join(__dirname, 'uploads', folderName); // Đường dẫn thư mục cần xóa
+
+      // Kiểm tra thư mục có tồn tại không
+      if (!fs.existsSync(folderPath)) {
+          return res.status(404).json({ error: 'Thư mục không tồn tại' });
+      }
+
+      // Xóa thư mục (bao gồm cả nội dung bên trong)
+      fs.rmSync(folderPath, { recursive: true, force: true });
+      
+      return res.status(200).json({ message: 'Thư mục đã được xóa thành công' });
+  } catch (error) {
+      console.error('Lỗi khi xóa thư mục:', error.message);
+      return res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
+  }
+}
+
 
 exports.getALLFolder = async (req, res) => {
-
   try {
     const uploadsDir = "uploads";
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir);
     }
-
-    // Hàm đệ quy để xây dựng cây danh mục, kèm danh sách file trong từng thư mục
     const buildFolderTree = (dir, parentPath = dir) => {
       try {
         const items = fs.readdirSync(dir, { withFileTypes: true });
