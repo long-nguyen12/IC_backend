@@ -10,6 +10,7 @@ const AdmZip = require("adm-zip");
 const HistoryController = require("../history/history.controller");
 const axios = require("axios");
 const FormData = require("form-data");
+const sharp = require("sharp");
 
 exports.getFoderAll = async (req, res) => {
   try {
@@ -26,7 +27,7 @@ exports.getFoderAll = async (req, res) => {
 exports.SendAI = async (req, res) => {
   try {
     const fileName = req.body.dectect_path;
-    const filePath = path.join(__dirname,"..","..","..",fileName);
+    const filePath = path.join(__dirname, "..", "..", "..", fileName);
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: "File not found" });
@@ -34,28 +35,28 @@ exports.SendAI = async (req, res) => {
 
     const formData = new FormData();
     formData.append("file", fs.createReadStream(filePath));
-    await axios.post("http://icai.ailabs.io.vn/v1/api/detection", formData, {
-      headers: {
-        ...formData.getHeaders(), 
-      },
-    })
-    .then( async (response) => {
-      const fileAI = await File.findOneAndUpdate(
-        { _id: req.body.id },
-        { $set: { describe: response.data.dectect_path} },
-        { returnDocument: "after" } 
-      );
-      res.status(200).json(fileAI)
-    })
-    .catch((error) => {
-      console.error("Lỗi upload:", error.message);
-      res.status(500).json({ error: error.message });
-    });
+    await axios
+      .post("http://icai.ailabs.io.vn/v1/api/detection", formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      })
+      .then(async (response) => {
+        const fileAI = await File.findOneAndUpdate(
+          { _id: req.body.id },
+          { $set: { describe: response.data.dectect_path } },
+          { returnDocument: "after" }
+        );
+        res.status(200).json(fileAI);
+      })
+      .catch((error) => {
+        console.error("Lỗi upload:", error.message);
+        res.status(500).json({ error: error.message });
+      });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 exports.getFileByFolder = async (req, res) => {
   try {
@@ -92,107 +93,6 @@ exports.getFileByFolder = async (req, res) => {
         .sort((b, a) => b.haveCaption - a.haveCaption)
         .slice((page - 1) * limit, page * limit);
     }
-    // ----------------------------- SHOULD MOVE TO ANOTHER FILE -------------------------------
-    // Check if folder have a JSON file
-    // const fileJSON = await File.find({
-    //   folder,
-    //   name: { $regex: /\.(json)$/i },
-    // });
-    // fileJSON.map((item) => {
-    //   var obj;
-    //   fs.readFile(
-    //     path.join("uploads", item.folder, item.name),
-    //     "utf8",
-    //     function (err, data) {
-    //       if (err) throw err;
-    //       obj = JSON.parse(data);
-    //       obj.categories.forEach(async (jsonCategory) => {
-    //         try {
-    //           // Check if the category already exists for the current folder
-    //           const existingCategory = await Categories.findOne({
-    //             folder: item.name.split("/")[0],
-    //             categories_name: jsonCategory.name,
-    //           });
-
-    //           // If the category does not exist, create and save it
-    //           if (!existingCategory) {
-    //             const category = new Categories({
-    //               categories_id: jsonCategory.id,
-    //               categories_name: jsonCategory.name,
-    //               supercategory: jsonCategory.supercategory,
-    //               folder: item.name.split("/")[0],
-    //             });
-    //             await category.save();
-    //             console.log(
-    //               `Category '${jsonCategory.name}' saved successfully.`
-    //             );
-    //           }
-    //         } catch (error) {
-    //           console.error("Error saving category:", error);
-    //         }
-    //       });
-    //       obj.images.forEach(async (image) => {
-    //         const describe = {
-    //           name: item.name.split("/")[0] + "/" + image.file_name,
-    //           folder: item.folder,
-    //           bbox: [],
-    //           describe: [],
-    //           categories_id: [],
-    //           categories_name: [],
-    //         };
-    //         const annotations = obj.annotations.filter(
-    //           (annotation) => annotation.image_id === image.id
-    //         );
-
-    //         annotations.forEach(async (annotation) => {
-    //           if (annotation.caption || annotation.segment_caption) {
-    //             describe.describe.push({
-    //               caption: annotation?.caption?.toString(),
-    //               segment_caption: annotation?.segment_caption?.toString(),
-    //             });
-    //             const imgFile = await File.findOne({
-    //               folder,
-    //               name: { $regex: image.file_name, $options: "i" },
-    //             });
-    //             if (imgFile) {
-    //               imgFile.haveCaption = true;
-    //               await imgFile.save();
-    //             }
-    //           }
-    //           if (annotation.bbox) {
-    //             describe.bbox.push(annotation.bbox);
-    //           }
-    //           const category = obj.categories.find(
-    //             (category) => category.id === annotation.category_id
-    //           );
-    //           if (category) {
-    //             describe.categories_id.push(category.id.toString());
-    //             describe.categories_name.push(category.name);
-    //           }
-    //         });
-    //         try {
-    //           const existingDescribe = await Describe.findOne({
-    //             name: describe.name,
-    //           });
-    //           if (!existingDescribe) {
-    //             await Describe.create(describe);
-    //             // await Categories.create(folderCategory);
-    //           }
-    //         } catch (error) {
-    //           console.error("Error saving describe:", error);
-    //         }
-    //       });
-    //     }
-    //   );
-    // });
-    // ----------------------------- SHOULD MOVE TO ANOTHER FILE -------------------------------
-
-    // ---------------------------------
-    // if (file.length === 0) {
-    //   return res
-    //     .status(404)
-    //     .json({ message: "Chưa có ảnh nào trong mục này có mô tả!" });
-    // }
 
     res.status(200).json({ file: sortFile });
   } catch (error) {
@@ -206,23 +106,23 @@ exports.updateFileInfo = async (req, res) => {
     const file = await File.findById(req.body.id);
     // file.haveCaption = true;
     // file.Describe = Describe;
-    file.caption  = JSON.parse(req.body.caption) 
-    file.markModified("data")
-    await file.save("file",file);
-    res.status(200).json({success:true, file:file});
+    file.caption = JSON.parse(req.body.caption);
+    file.markModified("data");
+    await file.save("file", file);
+    res.status(200).json({ success: true, file: file });
   } catch (error) {
-
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.uploadFile = async (req, res ) => {
+exports.uploadFile = async (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
   }
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
   const filePath = req.file.path;
   const fileName = path.basename(filePath, path.extname(filePath));
+  
   try {
     let imagePaths = [];
 
@@ -239,18 +139,17 @@ exports.uploadFile = async (req, res ) => {
     imagePaths.map((item) => {
       const newFile = new File({
         name: item,
-        folder: fileName,     
+        folder: fileName,
         path: req.file.path,
       });
-      newFile.save()
-        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
-        .catch((error) => console.error(`Error saving file ${item}:`, error));
+      // newFile.save()
+      //   .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
+      //   .catch((error) => console.error(`Error saving file ${item}:`, error));
     });
-
 
     res.status(201).send("File uploaded successfully.");
   } catch (err) {
-    res.status(400).json({ message: `ERROR: ${err.message}`});
+    res.status(400).json({ message: `ERROR: ${err.message}` });
   }
 };
 
@@ -314,10 +213,12 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
         reject(error);
       } else {
         console.log(`Extracted to "${outputDirectory}" successfully`);
+        processImagesInFolder(extractPath);
         resolve();
       }
     });
   });
+
   return imagePaths;
 }
 
@@ -351,27 +252,82 @@ async function extractImagesFromRar(filePath, folderName) {
   } catch (err) {
     console.error(err);
   }
+
+  await processImagesInFolder(extractPath);
   return imagePaths;
 }
 
+async function getAllImages(dir) {
+  let images = [];
+  const files = await fs.readdirSync(dir);
 
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    const stat = await fs.statSync(fullPath);
 
-// eleteAllData()
+    if (stat.isDirectory()) {
+      images = images.concat(await getAllImages(fullPath));
+    } else if (/\.(jpg|jpeg|png|webp)$/i.test(file)) {
+      images.push(fullPath);
+    }
+  }
+  return images;
+}
 
-async function eleteAllData(){
+/**
+ * Resize image while preserving directory structure
+ */
+async function resizeImage(imagePath) {
+  try {
+    const outputPath = imagePath + ".tmp"; // Temporary file
+    
+    await sharp(imagePath)
+      .resize(1024, 768, { fit: "inside" })
+      .jpeg({ quality: 80 })
+      .toFile(outputPath);
+
+    await fs.renameSync(outputPath, imagePath);
+
+    // console.log(`Resized: ${imagePath}`);
+    return outputPath;
+  } catch (error) {
+    console.error(`Error processing ${imagePath}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Process all images inside extracted folder (Resize while extracting)
+ */
+async function processImagesInFolder(folderPath) {
+  try {
+    const images = await getAllImages(folderPath);
+
+    if (images.length === 0) {
+      console.log("No images found for compression.");
+      return;
+    }
+
+    await Promise.all(images.map((image) => resizeImage(image)));
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+async function eleteAllData() {
   try {
     await File.deleteMany({});
     console.log("Đã xóa toàn bộ dữ liệu trong collection!");
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
-};
+}
 
 // Logdata()
-async function Logdata(){
+async function Logdata() {
   try {
     let ds = await File.find({});
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
-};
+}
