@@ -2,6 +2,10 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("./users.model");
+const HistoryController = require("../history/history.controller")
+
+
+
 
 async function createUser(req, res) {
   try {
@@ -38,7 +42,10 @@ async function createUser(req, res) {
       email,
       role: ["edit"],
     });
-    await user.save();
+    await user.save()
+    .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm tài khoản ${user.userName}`, user) )
+    .catch((error) => console.error(`Error saving file ${user}:`, error));
+
     res.status(201).json({  user });
   } catch (error) {
     res.status(500).json({ error: error });
@@ -134,8 +141,36 @@ const editUserRole = async (req, res) => {
   }
 };
 
+
+const UpdateInfoUser = async (req, res) => {
+  try {
+    const newUser = req.body
+    const user = await User.findById(req.user.userId);
+    const updatedUser = await User.findByIdAndUpdate(
+      req.body._id,
+      { 
+        userName: newUser.userName,
+        email:newUser.email
+       },
+      { new: true } 
+    );
+
+
+    // user.avartar = req.body.avatar;
+    // console.log("user$$$$$$$$$$$$$$",user)
+    await updatedUser.save()
+    .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Cập nhật thông tin tài khoản ${updatedUser.userName}`, updatedUser) )
+    .catch((error) => console.error(`Error saving file ${user}:`, error));
+
+
+    res.status(200).json( updatedUser );
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 const UpdateProFile = async (req, res) => {
-  
   try {
     const user = await User.findById(req.user.userId);
     // if (!user.avatar) {
@@ -154,10 +189,9 @@ const UpdateProFile = async (req, res) => {
       { new: true }  // Trả về tài liệu đã cập nhật
     );
 
+    await updatedUser.save()
+  
 
-    // user.avartar = req.body.avatar;
-    // console.log("user$$$$$$$$$$$$$$",user)
-    await updatedUser.save();
     res.status(200).json( updatedUser );
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -168,10 +202,13 @@ const DeletedUser = async (req, res) => {
   try {
     const id  = req.params.id;
 
-    const deletedUser = await User.findByIdAndDelete(id);
+    const deletedUser = await User.findByIdAndDelete(id)
     if (!deletedUser) {
       return res.status(404).json({ error: "Người dùng không tồn tại" });
     }
+
+    HistoryController.createHistory(req.user.userId, req.user.email,`Xóa tài khoản ${deletedUser.userName}`, deletedUser)
+
     return res.status(200).json({ message: "Xóa người dùng thành công", user: deletedUser });
   } catch (error) {
     console.error("Lỗi khi xóa người dùng:", error.message);
@@ -193,4 +230,4 @@ const Logout = async (req, res) => {
 };
 
 
-module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile,DeletedUser };
+module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile,DeletedUser,UpdateInfoUser };

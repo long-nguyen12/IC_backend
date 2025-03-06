@@ -243,7 +243,7 @@ exports.uploadFile = async (req, res ) => {
         path: req.file.path,
       });
       newFile.save()
-        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${fileName}`, item) )
+        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
         .catch((error) => console.error(`Error saving file ${item}:`, error));
     });
 

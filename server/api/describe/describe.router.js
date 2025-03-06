@@ -17,7 +17,6 @@ router.post(
   "/describe",
   authenticateToken,
   (req, res, next) => {
-    // Check if the user has the necessary role to access this route
     if (!(req.user.role.includes("edit") || req.user.role.includes("admin"))) {
       return res.status(403).json({ error: "Không có quyền truy cập" });
     }
