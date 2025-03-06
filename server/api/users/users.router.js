@@ -10,18 +10,22 @@ const {
   getUserList,
   editUserRole,
   UpdateProFile,
-  DeletedUser
+  DeletedUser,
+  UpdateInfoUser
 } = require("./users.controller");
 
 const { authenticateToken, verifyAdmin }  = require("../../auth");
 
 const upload = multer();
 
-router.post("/register", upload.none(), createUser);
+router.post("/register",authenticateToken, upload.none(), createUser);
 router.post("/login", loginUser);
 router.get("/logout", Logout);
 router.get("/user",authenticateToken,getUserList);
 router.put("/update",authenticateToken, UpdateProFile);
+router.put("/edit",authenticateToken, UpdateInfoUser);
+
+
 router.delete("/delete/:id",verifyAdmin, DeletedUser);
 
 router.put(
