@@ -218,8 +218,8 @@ async function getAllDataByFolder(req, res) {
         data.annotations.push({
           id: data.annotations.length + 1,
           image_id: id, // ID of the last added image
-          caption: value.caption,
-          segment_caption: value.segment_caption,
+          caption: value.caption.replace(/\s+/g, " ").trim(),
+          segment_caption: value.segment_caption.replace(/\s+/g, " ").trim(),
         });
         // }
       });
