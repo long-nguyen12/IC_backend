@@ -149,8 +149,8 @@ exports.uploadFile = async (req, res) => {
         path: req.file.path,
       });
       newFile.save()
-      //   .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
-      //   .catch((error) => console.error(`Error saving file ${item}:`, error));
+        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
+        .catch((error) => console.error(`Error saving file ${item}:`, error));
     });
 
     res.status(201).send("File uploaded successfully.");
@@ -267,8 +267,8 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
         console.log(error);
         reject(error);
       } else {
-        console.log(`Extracted to "${extractPath}" successfully`);
-        processImagesInFolder(extractPath);
+        console.log(`Extracted to "${outputDirectory}" successfully`);
+        // processImagesInFolder(extractPath);
         resolve();
       }
     });
