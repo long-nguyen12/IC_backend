@@ -33,7 +33,9 @@ mongoose
 // Use user routes
 app.use("/api", router);
 // app.use("/api", fileRoutes);
+
 app.use(express.static(path.join(__dirname + '/static/image')))
+app.use("/uploads", express.static("uploads"))
 
 const port = process.env.PORT || 7000;
 app.listen(port, () => {
