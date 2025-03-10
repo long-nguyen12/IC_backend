@@ -47,7 +47,7 @@ exports.getData = (req, res) => {
   let folderPath = req.params.folderPath || "";
 
   if (!fs.existsSync(folderPath)) {
-    return res.status(404).json({ message: "Thư mục không tồn tại." });
+    return res.status(404).json({ message: "Thư mục không tồn tại 123." });
   }
 
   const data = getFolderData(folderPath);
@@ -109,25 +109,7 @@ exports.getFolder = async (req, res) => {
   }
 };
 
-exports.deleteFolder = async (req, res) => {
-  try {
-      const folderName = req.params.folderName;
-      const folderPath = path.join(__dirname, 'uploads', folderName); // Đường dẫn thư mục cần xóa
 
-      // Kiểm tra thư mục có tồn tại không
-      if (!fs.existsSync(folderPath)) {
-          return res.status(404).json({ error: 'Thư mục không tồn tại' });
-      }
-
-      // Xóa thư mục (bao gồm cả nội dung bên trong)
-      fs.rmSync(folderPath, { recursive: true, force: true });
-      
-      return res.status(200).json({ message: 'Thư mục đã được xóa thành công' });
-  } catch (error) {
-      console.error('Lỗi khi xóa thư mục:', error.message);
-      return res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
-  }
-}
 
 
 exports.getALLFolder = async (req, res) => {
@@ -190,3 +172,5 @@ exports.getALLFolder = async (req, res) => {
 
   
 };
+
+
