@@ -159,6 +159,36 @@ exports.uploadFile = async (req, res) => {
   }
 };
 
+
+
+
+
+exports.deleteFolder = async (req, res) => {
+  
+  try {
+
+      const folderName = req.params.folderName;
+      console.log("folderName",folderName)
+
+      const folderPath = path.join(__dirname,"..","..", "..", "uploads", folderName);
+
+
+      console.log("folderPath",folderPath)
+      
+      if (!fs.existsSync(folderPath)) {
+          return res.status(404).json({ error: 'Thư mục không tồn tạissss' });
+      }
+
+     
+      fs.rmSync(folderPath, { recursive: true, force: true });
+      
+      return res.status(200).json({ message: 'Thư mục đã được xóa thành công' });
+  } catch (error) {
+      console.error('Lỗi khi xóa thư mục:', error.message);
+      return res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
+  }
+}
+
 async function extractImagesFromZip(filePath, folderName) {
   const imagePaths = [];
   const extractPath = path.join("uploads", folderName);
@@ -189,47 +219,6 @@ async function extractImagesFromZip(filePath, folderName) {
     .promise();
   return imagePaths;
 }
-
-// async function unzipDirectory(inputFilePath, outputDirectory) {
-//   const imagePaths = [];
-//   const folderPaths = [];
-//   const extractPath = path.join("uploads", outputDirectory);
-//   const zip = new AdmZip(inputFilePath);
-//   var zipEntries = zip.getEntries();
-//   zipEntries.forEach(function (zipEntry) {
-//     const fileName = zipEntry.entryName.split("/");
-//     const imageExtension = path.extname(zipEntry.entryName).toLowerCase();
-//     console.log("")
-
-//     if (folderPaths.includes(fileName[0])) {
-//     } else {
-//       folderPaths.push(fileName[0]);
-//     }
-//     if (
-//       imageExtension === ".jpg" ||
-//       imageExtension === ".jpeg" ||
-//       imageExtension === ".png" ||
-//       imageExtension === ".json"
-//     ) {
-//       imagePaths.push(zipEntry.entryName);
-//     }
-//   });
-//   new Promise((resolve, reject) => {
-//     zip.extractAllToAsync(extractPath, true, (error) => {
-//       if (error) {
-//         console.log(error);
-//         reject(error);
-//       } else {
-//         console.log(`Extracted to "${outputDirectory}" successfully`);
-//         processImagesInFolder(extractPath);
-//         resolve();
-//       }
-//     });
-//   });
-
-//   return imagePaths;
-// }
-
 
 
 
@@ -368,7 +357,7 @@ async function processImagesInFolder(folderPath) {
   }
 }
 
-// eleteAllData()
+
 
 async function eleteAllData() {
   try {
@@ -385,9 +374,6 @@ async function eleteAllData() {
 async function Logdata() {
   try {
     const files = await File.find()
-   // Sắp xếp theo createdAt (mới nhất trước)
-
-
     console.log("ds",files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);

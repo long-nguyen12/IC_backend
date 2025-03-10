@@ -28,6 +28,8 @@ router.get("/foder", authenticateToken, fileController.getFoderAll);
 router.post("/updatefile",authenticateToken, fileController.updateFileInfo)
 router.post("/singbox",authenticateToken, fileController.SendAI)
 
+router.get("/delete-folder/:folderName",fileController.deleteFolder);
+
 
 router.post(
   "/upload",
