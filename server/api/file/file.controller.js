@@ -138,11 +138,7 @@ exports.uploadFile = async (req, res) => {
         .send("Unsupported file format. Please upload a zip or rar file.");
     }
     const savePromises = [];
-    console.log("item---------",imagePaths)
-
-
-    imagePaths.map((item) => {
-
+      imagePaths.map((item) => {
       const newFile = new File({
         name: item,
         folder: fileName,
@@ -169,11 +165,14 @@ exports.deleteFolder = async (req, res) => {
 
       const folderName = req.params.folderName;
       console.log("folderName",folderName)
-
+      await File.deleteMany({ folder: folderName })
       const folderPath = path.join(__dirname,"..","..", "..", "uploads", folderName);
 
 
       console.log("folderPath",folderPath)
+
+
+
       
       if (!fs.existsSync(folderPath)) {
           return res.status(404).json({ error: 'Thư mục không tồn tạissss' });
@@ -238,14 +237,14 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
       folderPaths.push(fileName[0]);
     }
 
-    // Chỉ lưu ảnh và JSON
+  
     if ([".jpg", ".jpeg", ".png", ".json"].includes(imageExtension)) {
-      const relativePath = path.join("uploads", outputDirectory, zipEntry.entryName); // Giữ nguyên "uploads"
+      const relativePath = path.join("uploads", outputDirectory, zipEntry.entryName); 
       imagePaths.push(relativePath);
     }
   });
 
-  // Đảm bảo thư mục tồn tại trước khi giải nén
+ 
   if (!fs.existsSync(extractPath)) {
     fs.mkdirSync(extractPath, { recursive: true });
   }
@@ -339,9 +338,6 @@ async function resizeImage(imagePath) {
   }
 }
 
-/**
- * Process all images inside extracted folder (Resize while extracting)
- */
 async function processImagesInFolder(folderPath) {
   try {
     const images = await getAllImages(folderPath);
@@ -373,8 +369,11 @@ async function eleteAllData() {
 // Logdata() 
 async function Logdata() {
   try {
+    const ids ="67ca90b98ce0370ab619c9ed"
+    // const files = await File.findById(ids)
     const files = await File.find()
-    console.log("ds",files)
+    // console.log("ds",files)
+    // console.log("lengt",files.length)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
