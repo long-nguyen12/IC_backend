@@ -1,62 +1,78 @@
 const fs = require("fs");
 const path = require("path");
+const File = require("../file/file.model");
 
+// const getImageDb = async () => {
+//   const file = await File.find();
+//   return img
+// }
 
-const getFolderData = (dir) => {
+const formatToWindowsPath = (filePath) => {
+  return filePath.replace(/\//g, "\\");
+};
+
+const getFolderData = async (dir) => {
   try {
-    const items = fs.readdirSync(dir, { withFileTypes: true });
+    const pathQuery = formatToWindowsPath(dir)
+    console.log("pathQuery",pathQuery)
+    const items = await fs.promises.readdir(dir, { withFileTypes: true });
 
-    // Lấy danh mục con
-    const children = items
-      .filter((item) => item.isDirectory())
-      .map((folder) => {
-        const folderPath = path.join(dir, folder.name);
-        return {
-          name: folder.name,
-          path: folderPath,
-          children: getFolderData(folderPath).children,
-          images: getFolderData(folderPath).images,
-          otherFiles: getFolderData(folderPath).otherFiles,
-        };
-      });
-
-    const images = [];
-    const otherFiles = [];
+    // Lấy danh sách hình ảnh từ database (nếu có sử dụng MongoDB)
+    const imgList = await File.find({ path: pathQuery }).catch(() => []);
+    console.log("imgList",imgList)
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
 
-    items.filter((item) => item.isFile()).forEach((file) => {
-      const filePath = path.join(dir, file.name);
-      const ext = path.extname(file.name).toLowerCase();
+    let children = [];
+    let images = [...imgList];
+    let otherFiles = [];
 
-      if (imageExtensions.includes(ext)) {
-        images.push({ name: file.name, path: filePath });
-      } else {
-        otherFiles.push({ name: file.name, path: filePath });
+   
+    items.forEach((item) => {
+      const filePath = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        children.push({
+          name: item.name,
+          path: filePath,
+        });
+      } else if (item.isFile()) {
+        const ext = path.extname(item.name).toLowerCase();
+        if (imageExtensions.includes(ext)) {
+          // images.push({ name: item.name, path: filePath });
+        } else {
+          otherFiles.push({ name: item.name, path: filePath });
+        }
       }
     });
 
     return { name: path.basename(dir), path: dir, children, images, otherFiles };
+
   } catch (err) {
-    console.error("Lỗi đọc thư mục:", err);
+    console.error("Lỗi khi đọc thư mục:", err);
     return { name: path.basename(dir), path: dir, children: [], images: [], otherFiles: [] };
   }
 };
 
 
-exports.getData = (req, res) => {
+
+
+
+exports.getData = async (req, res) => {
+  console.log("query",req.params)
   let folderPath = req.params.folderPath || "";
 
   if (!fs.existsSync(folderPath)) {
     return res.status(404).json({ message: "Thư mục không tồn tại 123." });
   }
 
-  const data = getFolderData(folderPath);
-  res.status(200).json({ message: "Danh sách thư mục và file.", data });
+  const data = await getFolderData(folderPath);
+  
+  res.status(200).json({ message: "Danh sách thư mục và filessss.",data });
 };
 
 
 
 exports.getFolder = async (req, res) => {
+  console.log("query",req)
   try {
     // Check if the "uploads" directory exists, if not, create it
     if (!fs.existsSync("uploads")) {
@@ -115,14 +131,14 @@ exports.getFolder = async (req, res) => {
 exports.getALLFolder = async (req, res) => {
   try {
     const uploadsDir = "uploads";
+
+
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir);
     }
     const buildFolderTree = (dir, parentPath = dir) => {
       try {
         const items = fs.readdirSync(dir, { withFileTypes: true });
-    
-        // Lấy danh mục con
         const children = items
           .filter((item) => item.isDirectory())
           .map((folder) => {
@@ -131,8 +147,8 @@ exports.getALLFolder = async (req, res) => {
               name: folder.name,
               path: folderPath,
               children: getFolderData(folderPath).children,
-              images: getFolderData(folderPath).images, // Lọc hình ảnh
-              otherFiles: getFolderData(folderPath).otherFiles, // Lọc file khác
+              images: getFolderData(folderPath).images,
+              otherFiles: getFolderData(folderPath).otherFiles,
             };
           });
     
@@ -144,7 +160,6 @@ exports.getALLFolder = async (req, res) => {
         items.filter((item) => item.isFile()).forEach((file) => {
           const filePath = path.join(dir, file.name);
           const ext = path.extname(file.name).toLowerCase();
-    
           if (imageExtensions.includes(ext)) {
             images.push({ name: file.name, path: filePath });
           } else {
@@ -154,12 +169,12 @@ exports.getALLFolder = async (req, res) => {
     
         return { name: path.basename(dir), path: dir, children, images, otherFiles };
       } catch (err) {
-        console.error("Lỗi đọc thư mục:", err);
+       
         return { name: path.basename(dir), path: dir, children: [], images: [], otherFiles: [] };
       }
     };
 
-    // Xây dựng cây danh mục từ thư mục "uploads"
+    
     const folderTree = buildFolderTree(uploadsDir);
 
     res.status(200).json({

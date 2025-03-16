@@ -155,12 +155,15 @@ async function updateDescribe(req, res) {
 }
 
 async function getAllDataByFolder(req, res) {
+
   try {
     const { folderName } = req.query;
 
     const describeData = await File.find({
       folder: folderName,
     });
+
+    console.log("describeData", describeData)
 
     // Construct JSON object
     const data = {
@@ -174,10 +177,13 @@ async function getAllDataByFolder(req, res) {
     // Iterate over each item in describeData
     for (const item of describeData) {
       const { name, caption } = item;
+      console.log("item",item)
+      console.log("caption",caption)
 
       if (!caption) continue;
       // Assuming your images folder is in the same directory as this script
-      const imagePath = path.join("uploads", folderName, name);
+      // const imagePath = path.join("uploads", folderName, name);
+      const imagePath = name;
 
       if (!fs.existsSync(imagePath)) {
         throw new Error(`Image ${name} not found in folder ${folderName}`);
@@ -190,6 +196,7 @@ async function getAllDataByFolder(req, res) {
           else resolve(dimensions);
         });
       });
+
       const id = generateImageId(name);
       let fileName = name.split("/").pop();
       data.images.push({
@@ -197,7 +204,7 @@ async function getAllDataByFolder(req, res) {
         width: dimensions.width,
         height: dimensions.height,
         file_name: fileName,
-        coco_url: fileName, // Assuming coco_url is the same as file_name
+        coco_url: fileName,
       });
 
       Object.values(caption).forEach((value) => {
@@ -233,15 +240,17 @@ async function getAllDataByFolder(req, res) {
 
     // Write JSON object to file in the 'output' folder
     const jsonFilePath = path.join(outputFolderPath, `${folderName}.json`);
-    fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2));
 
-    // Send JSON response
-    // res.status(200).json({
-    //   success: true,
-    //   message: "JSON file saved successfully",
-    //   file: jsonFilePath,
-    // });
-    res.sendFile(jsonFilePath);
+    fs.writeFile(jsonFilePath, JSON.stringify(data, null, 2), (err) => {
+      if (err) {
+        console.error("❌ Lỗi ghi file JSON:", err);
+        return res.status(500).json({ success: false, message: "Lỗi ghi file JSON" });
+      }
+
+
+      res.download(jsonFilePath);
+    });
+
   } catch (error) {
     // Send error response
     res.status(500).json({ success: false, error: error.message });
