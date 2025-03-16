@@ -125,34 +125,53 @@ exports.uploadFile = async (req, res) => {
   const filePath = req.file.path;
   const fileName = path.basename(filePath, path.extname(filePath));
   
+  console.log("fileName",fileName)
+ 
+  
+
   try {
-    let imagePaths = [];
+    const folrder = await File.find({folder:fileName});
+    console.log("folrder",folrder)
+    if(folrder.length == 0) {
 
-    if (fileExtension === ".zip") {
-      imagePaths = await unzipDirectory(filePath, fileName);
-    } else if (fileExtension === ".rar") {
-      imagePaths = await extractImagesFromRar(filePath, fileName);
-    } else {
-      return res
-        .status(400)
-        .send("Unsupported file format. Please upload a zip or rar file.");
-    }
-    const savePromises = [];
-      imagePaths.map((item) => {
-      const newFile = new File({
-        name: item,
-        folder: fileName,
-        path: req.file.path,
+  
+      let imagePaths = [];
+
+      if (fileExtension === ".zip") {
+        imagePaths = await unzipDirectory(filePath, fileName);
+      } else if (fileExtension === ".rar") {
+        imagePaths = await extractImagesFromRar(filePath, fileName);
+      } else {
+        return res
+          .status(400)
+          .send("Unsupported file format. Please upload a zip or rar file.");
+      }
+      const savePromises = [];
+        imagePaths.map((item) => {
+          const pathImg = item.split("\\");
+          pathImg.pop()
+          const result = pathImg.join("\\");
+        
+        const newFile = new File({
+          name: item,
+          folder: fileName,
+          path: result,
+        });
+        newFile.save()
+          .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
+          .catch((error) => console.error(`Error saving file ${item}:`, error));
       });
-      newFile.save()
-        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
-        .catch((error) => console.error(`Error saving file ${item}:`, error));
-    });
 
-    res.status(201).send("File uploaded successfully.");
+      res.status(201).send("File uploaded successfully.");
+    }else{
+      res.status(405).send("Thư mục đãn tồn tại");
+    }
+
   } catch (err) {
+    
     res.status(400).json({ message: `ERROR: ${err.message}` });
   }
+
 };
 
 
@@ -355,6 +374,8 @@ async function processImagesInFolder(folderPath) {
 
 
 
+// eleteAllData()
+
 async function eleteAllData() {
   try {
     await File.deleteMany({});
@@ -372,7 +393,7 @@ async function Logdata() {
     const ids ="67ca90b98ce0370ab619c9ed"
     // const files = await File.findById(ids)
     const files = await File.find()
-    // console.log("ds",files)
+    console.log("ds",files)
     // console.log("lengt",files.length)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
