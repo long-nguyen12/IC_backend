@@ -30,9 +30,12 @@ exports.SendAI = async (req, res) => {
     console.log(fileName)
 
     const filePath = path.join(__dirname, "..", "..", "..", fileName);
+    
+
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "File not found" });
+
+      return res.status(404).json({ error: `File not found: ${filePath} ` });
     }
 
     const formData = new FormData();
