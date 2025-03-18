@@ -199,7 +199,7 @@ async function getAllDataByFolder(req, res) {
       });
 
       const id = generateImageId(name);
-      let fileName = name.split("/").pop();
+      let fileName = name.split(/\\/g).pop();
       data.images.push({
         id,
         width: dimensions.width,
