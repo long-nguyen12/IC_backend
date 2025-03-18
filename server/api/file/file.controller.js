@@ -26,15 +26,11 @@ exports.getFoderAll = async (req, res) => {
 
 exports.SendAI = async (req, res) => {
   try {
-    const fileName = req.body.dectect_path;
-    console.log(fileName)
+    let fileName = req.body.dectect_path;
 
-    const filePath = path.join(__dirname, "..", "..", "..", fileName);
-    
-
+    const filePath = path.join(__dirname, "..", "..", "..", fileName.replace(/\\/g, "/"));
 
     if (!fs.existsSync(filePath)) {
-
       return res.status(404).json({ error: `File not found: ${filePath} ` });
     }
 
@@ -127,17 +123,13 @@ exports.uploadFile = async (req, res) => {
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
   const filePath = req.file.path;
   const fileName = path.basename(filePath, path.extname(filePath));
-  
-  console.log("fileName",fileName)
- 
-  
+
+  console.log("fileName", fileName);
 
   try {
-    const folrder = await File.find({folder:fileName});
-    console.log("folrder",folrder)
-    if(folrder.length == 0) {
-
-  
+    const folrder = await File.find({ folder: fileName });
+    console.log("folrder", folrder);
+    if (folrder.length == 0) {
       let imagePaths = [];
 
       if (fileExtension === ".zip") {
@@ -150,65 +142,66 @@ exports.uploadFile = async (req, res) => {
           .send("Unsupported file format. Please upload a zip or rar file.");
       }
       const savePromises = [];
-        imagePaths.map((item) => {
-          const pathImg = item.split("\\");
-          pathImg.pop()
-          const result = pathImg.join("\\");
-        
+      imagePaths.map((item) => {
+        const pathImg = item.split("\\");
+        pathImg.pop();
+        const result = pathImg.join("\\");
+
         const newFile = new File({
           name: item,
           folder: fileName,
           path: result,
         });
-        newFile.save()
-          .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${path}`, item) )
+        newFile
+          .save()
+          .then(() =>
+            HistoryController.createHistory(
+              req.user.userId,
+              req.user.email,
+              `Thêm mới file ${path}`,
+              item
+            )
+          )
           .catch((error) => console.error(`Error saving file ${item}:`, error));
       });
 
       res.status(201).send("File uploaded successfully.");
-    }else{
+    } else {
       res.status(405).send("Thư mục đãn tồn tại");
     }
-
   } catch (err) {
-    
     res.status(400).json({ message: `ERROR: ${err.message}` });
   }
-
 };
 
-
-
-
-
 exports.deleteFolder = async (req, res) => {
-  
   try {
+    const folderName = req.params.folderName;
+    console.log("folderName", folderName);
+    await File.deleteMany({ folder: folderName });
+    const folderPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "uploads",
+      folderName
+    );
 
-      const folderName = req.params.folderName;
-      console.log("folderName",folderName)
-      await File.deleteMany({ folder: folderName })
-      const folderPath = path.join(__dirname,"..","..", "..", "uploads", folderName);
+    console.log("folderPath", folderPath);
 
+    if (!fs.existsSync(folderPath)) {
+      return res.status(404).json({ error: "Thư mục không tồn tạissss" });
+    }
 
-      console.log("folderPath",folderPath)
+    fs.rmSync(folderPath, { recursive: true, force: true });
 
-
-
-      
-      if (!fs.existsSync(folderPath)) {
-          return res.status(404).json({ error: 'Thư mục không tồn tạissss' });
-      }
-
-     
-      fs.rmSync(folderPath, { recursive: true, force: true });
-      
-      return res.status(200).json({ message: 'Thư mục đã được xóa thành công' });
+    return res.status(200).json({ message: "Thư mục đã được xóa thành công" });
   } catch (error) {
-      console.error('Lỗi khi xóa thư mục:', error.message);
-      return res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
+    console.error("Lỗi khi xóa thư mục:", error.message);
+    return res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
   }
-}
+};
 
 async function extractImagesFromZip(filePath, folderName) {
   const imagePaths = [];
@@ -241,12 +234,10 @@ async function extractImagesFromZip(filePath, folderName) {
   return imagePaths;
 }
 
-
-
 async function unzipDirectory(inputFilePath, outputDirectory) {
   const imagePaths = [];
   const folderPaths = [];
-  const extractPath = path.join("uploads", outputDirectory); 
+  const extractPath = path.join("uploads", outputDirectory);
 
   const zip = new AdmZip(inputFilePath);
   const zipEntries = zip.getEntries();
@@ -259,14 +250,16 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
       folderPaths.push(fileName[0]);
     }
 
-  
     if ([".jpg", ".jpeg", ".png", ".json"].includes(imageExtension)) {
-      const relativePath = path.join("uploads", outputDirectory, zipEntry.entryName); 
+      const relativePath = path.join(
+        "uploads",
+        outputDirectory,
+        zipEntry.entryName
+      );
       imagePaths.push(relativePath);
     }
   });
 
- 
   if (!fs.existsSync(extractPath)) {
     fs.mkdirSync(extractPath, { recursive: true });
   }
@@ -286,7 +279,6 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
 
   return imagePaths;
 }
-
 
 async function extractImagesFromRar(filePath, folderName) {
   const imagePaths = [];
@@ -344,7 +336,7 @@ async function getAllImages(dir) {
 async function resizeImage(imagePath) {
   try {
     const outputPath = imagePath + ".tmp"; // Temporary file
-    
+
     await sharp(imagePath)
       .resize(1024, 768, { fit: "inside" })
       .jpeg({ quality: 80 })
@@ -375,8 +367,6 @@ async function processImagesInFolder(folderPath) {
   }
 }
 
-
-
 // eleteAllData()
 
 async function eleteAllData() {
@@ -388,16 +378,13 @@ async function eleteAllData() {
   }
 }
 
-
-
-Logdata() 
+Logdata();
 async function Logdata() {
   try {
-    const ids ="67ca90b98ce0370ab619c9ed"
+    const ids = "67ca90b98ce0370ab619c9ed";
     // const files = await File.findById(ids)
-    const files = await File.find()
-    console.log("ds",files)
-  
+    const files = await File.find();
+    // console.log("ds",files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }

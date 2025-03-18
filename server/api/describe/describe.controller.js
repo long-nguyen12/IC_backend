@@ -155,15 +155,12 @@ async function updateDescribe(req, res) {
 }
 
 async function getAllDataByFolder(req, res) {
-
   try {
     const { folderName } = req.query;
 
     const describeData = await File.find({
       folder: folderName,
     });
-
-    console.log("describeData", describeData)
 
     // Construct JSON object
     const data = {
@@ -176,14 +173,18 @@ async function getAllDataByFolder(req, res) {
 
     // Iterate over each item in describeData
     for (const item of describeData) {
-      const { name, caption } = item;
-      console.log("item",item)
-      console.log("caption",caption)
+      let { name, caption } = item;
 
       if (!caption) continue;
       // Assuming your images folder is in the same directory as this script
       // const imagePath = path.join("uploads", folderName, name);
-      const imagePath = name;
+      const imagePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        name.replace(/\\/g, "/")
+      );
 
       if (!fs.existsSync(imagePath)) {
         throw new Error(`Image ${name} not found in folder ${folderName}`);
@@ -233,7 +234,10 @@ async function getAllDataByFolder(req, res) {
     }
 
     // Check if the 'output' folder exists, if not, create it
-    const outputFolderPath = path.join(path.resolve(__dirname, "../../.."), "output");
+    const outputFolderPath = path.join(
+      path.resolve(__dirname, "../../.."),
+      "output"
+    );
     if (!fs.existsSync(outputFolderPath)) {
       fs.mkdirSync(outputFolderPath);
     }
@@ -244,13 +248,13 @@ async function getAllDataByFolder(req, res) {
     fs.writeFile(jsonFilePath, JSON.stringify(data, null, 2), (err) => {
       if (err) {
         console.error("❌ Lỗi ghi file JSON:", err);
-        return res.status(500).json({ success: false, message: "Lỗi ghi file JSON" });
+        return res
+          .status(500)
+          .json({ success: false, message: "Lỗi ghi file JSON" });
       }
-
 
       res.download(jsonFilePath);
     });
-
   } catch (error) {
     // Send error response
     res.status(500).json({ success: false, error: error.message });
