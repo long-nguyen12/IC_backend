@@ -30,9 +30,12 @@ exports.SendAI = async (req, res) => {
     console.log(fileName)
 
     const filePath = path.join(__dirname, "..", "..", "..", fileName);
+    
+
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "File not found" });
+
+      return res.status(404).json({ error: `File not found: ${filePath} ` });
     }
 
     const formData = new FormData();
@@ -387,14 +390,14 @@ async function eleteAllData() {
 
 
 
-// Logdata() 
+Logdata() 
 async function Logdata() {
   try {
     const ids ="67ca90b98ce0370ab619c9ed"
     // const files = await File.findById(ids)
     const files = await File.find()
     console.log("ds",files)
-    // console.log("lengt",files.length)
+  
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
