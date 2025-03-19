@@ -12,12 +12,17 @@ const { getSwaggerDocument } = require("./server/swagger.js");
 
 const app = express();
 app.use(cookieParser());
-app.use(cors());
+// app.use(cors());
+
+app.use(cors({
+  origin: 'http://localhost:3000', 
+  credentials: true 
+}));
 
 const swaggerDocument = getSwaggerDocument();
 const specs = swaggerJsdoc({
   swaggerDefinition: swaggerDocument,
-  apis: ["./server/api/*.js"], // Path to the API docs
+  apis: ["./server/api/*.js"], 
 });
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
@@ -43,7 +48,7 @@ app.use("/api", router);
 app.use(express.static(path.join(__dirname + "/static/image")));
 app.use("/uploads", express.static("uploads"));
 
-const port = process.env.PORT || 7005;
+const port = process.env.PORT || 7000;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
