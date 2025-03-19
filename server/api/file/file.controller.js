@@ -26,12 +26,15 @@ exports.getFoderAll = async (req, res) => {
 
 exports.SendAI = async (req, res) => {
   try {
-    let fileName = req.body.dectect_path;
+
+    const fileName = req.body.dectect_path;
 
     const filePath = path.join(__dirname, "..", "..", "..", fileName.replace(/\\/g, "/"));
 
     if (!fs.existsSync(filePath)) {
+
       return res.status(404).json({ error: `File not found: ${filePath} ` });
+
     }
 
     const formData = new FormData();
@@ -48,10 +51,10 @@ exports.SendAI = async (req, res) => {
           { $set: { describe: response.data.dectect_path } },
           { returnDocument: "after" }
         );
-        res.status(200).json(fileAI);
+        res.status(200).json({fileAI,text:filePath });
       })
       .catch((error) => {
-        console.error("Lỗi upload:", error.message);
+        console.error(`Lỗi upload: ${filePath}`, error.message);
         res.status(500).json({ error: error.message });
       });
   } catch (error) {
