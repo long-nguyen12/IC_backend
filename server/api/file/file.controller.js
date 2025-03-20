@@ -46,12 +46,14 @@ exports.SendAI = async (req, res) => {
         },
       })
       .then(async (response) => {
+        console.log("response.data",response.data)
+        const linkBoximg = `http://icai.ailabs.io.vn/v1/api/images/` +  response.data.dectect_path.split("/").pop()
         const fileAI = await File.findOneAndUpdate(
           { _id: req.body.id },
-          { $set: { describe: response.data.dectect_path } },
+          { $set: { describe: linkBoximg } },
           { returnDocument: "after" }
         );
-        res.status(200).json({fileAI,text:filePath });
+        res.status(200).json(fileAI );
       })
       .catch((error) => {
         console.error(`Lỗi upload: ${filePath}`, error.message);
@@ -104,6 +106,21 @@ exports.getFileByFolder = async (req, res) => {
   }
 };
 
+exports.getFileId = async (req, res) => {
+  try {
+    // const { folder, name , Describe } = req.query;
+ 
+    const file = await File.findById(req.query.id);
+    // file.haveCaption = true;
+    // file.Describe = Describe;
+    
+    res.status(200).json(file);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 exports.updateFileInfo = async (req, res) => {
   try {
     // const { folder, name , Describe } = req.query;
@@ -127,11 +144,11 @@ exports.uploadFile = async (req, res) => {
   const filePath = req.file.path;
   const fileName = path.basename(filePath, path.extname(filePath));
 
-  console.log("fileName", fileName);
+ 
 
   try {
     const folrder = await File.find({ folder: fileName });
-    console.log("folrder", folrder);
+   
     if (folrder.length == 0) {
       let imagePaths = [];
 
@@ -180,7 +197,7 @@ exports.uploadFile = async (req, res) => {
 exports.deleteFolder = async (req, res) => {
   try {
     const folderName = req.params.folderName;
-    console.log("folderName", folderName);
+ 
     await File.deleteMany({ folder: folderName });
     const folderPath = path.join(
       __dirname,
@@ -191,7 +208,7 @@ exports.deleteFolder = async (req, res) => {
       folderName
     );
 
-    console.log("folderPath", folderPath);
+ 
 
     if (!fs.existsSync(folderPath)) {
       return res.status(404).json({ error: "Thư mục không tồn tạissss" });
@@ -270,7 +287,7 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
   await new Promise((resolve, reject) => {
     zip.extractAllToAsync(extractPath, true, (error) => {
       if (error) {
-        console.log(error);
+        
         reject(error);
       } else {
         console.log(`Extracted to "${outputDirectory}" successfully`);
@@ -381,7 +398,7 @@ async function eleteAllData() {
   }
 }
 
-Logdata();
+// Logdata();
 async function Logdata() {
   try {
     const ids = "67ca90b98ce0370ab619c9ed";
