@@ -12,7 +12,10 @@ const { getSwaggerDocument } = require("./server/swagger.js");
 
 const app = express();
 app.use(cookieParser());
-// app.use(cors());
+app.use(cors({
+  origin: 'http://iclabel.ailabs.io.vn', // Địa chỉ client
+  credentials: true 
+}));
 
 app.use(cors({
   origin: 'http://localhost:3000', 
