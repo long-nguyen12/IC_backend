@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("./users.model");
 const HistoryController = require("../history/history.controller")
-
+const config = require(`./../../constant/config`)
 
 
 
@@ -74,10 +74,10 @@ async function loginUser(req, res) {
 
     res.cookie('authToken', token, {
       httpOnly: true, // Cookie không thể truy cập từ JavaScript
-      secure: false,  // Đặt true nếu bạn chạy trên HTTPS (để dễ dàng phát triển, có thể để false)
+      secure: true,  // Đặt true nếu bạn chạy trên HTTPS (để dễ dàng phát triển, có thể để false)
       maxAge: 24 * 60 * 60 * 1000, // Cookie tồn tại trong 1 ngày
       sameSite: 'Strict', // Cần thiết để cho phép gửi cookie cross-origin
-      Domain:'localhost', // Thay thế bằng tên miền của bạn
+      Domain:'iclabel-api.ailabs.io.vn', // Thay thế bằng tên miền của bạn
       path: '/',
     });
 
