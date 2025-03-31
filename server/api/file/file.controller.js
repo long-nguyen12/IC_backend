@@ -40,14 +40,14 @@ exports.SendAI = async (req, res) => {
     const formData = new FormData();
     formData.append("file", fs.createReadStream(filePath));
     await axios
-      .post("http://icai.ailabs.io.vn/v1/api/detection", formData, {
+      .post("https://icai.ailabs.io.vn/v1/api/detection", formData, {
         headers: {
           ...formData.getHeaders(),
         },
       })
       .then(async (response) => {
         console.log("response.data",response.data)
-        const linkBoximg = `http://icai.ailabs.io.vn/v1/api/images/` +  response.data.dectect_path.split("/").pop()
+        const linkBoximg = `https://icai.ailabs.io.vn/v1/api/images/` +  response.data.dectect_path.split("/").pop()
         const fileAI = await File.findOneAndUpdate(
           { _id: req.body.id },
           { $set: { describe: linkBoximg } },
