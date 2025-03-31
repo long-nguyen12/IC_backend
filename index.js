@@ -13,12 +13,7 @@ const { getSwaggerDocument } = require("./server/swagger.js");
 const app = express();
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://iclabel.ailabs.io.vn', // Địa chỉ client
-  credentials: true 
-}));
-
-app.use(cors({
-  origin: 'http://localhost:3000', 
+  origin: 'https://iclabel.ailabs.io.vn', // Địa chỉ client
   credentials: true 
 }));
 
@@ -51,7 +46,7 @@ app.use("/api", router);
 app.use(express.static(path.join(__dirname + "/static/image")));
 app.use("/uploads", express.static("uploads"));
 
-const port = process.env.PORT || 7000;
+const port = process.env.PORT || 7005;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

@@ -386,26 +386,3 @@ async function processImagesInFolder(folderPath) {
     console.log(e);
   }
 }
-
-// eleteAllData()
-
-async function eleteAllData() {
-  try {
-    await File.deleteMany({});
-    console.log("Đã xóa toàn bộ dữ liệu trong collection!");
-  } catch (error) {
-    console.error("Lỗi khi xóa dữ liệu:", error);
-  }
-}
-
-// Logdata();
-async function Logdata() {
-  try {
-    const ids = "67ca90b98ce0370ab619c9ed";
-    // const files = await File.findById(ids)
-    const files = await File.find();
-    // console.log("ds",files)
-  } catch (error) {
-    console.error("Lỗi khi xóa dữ liệu:", error);
-  }
-}
