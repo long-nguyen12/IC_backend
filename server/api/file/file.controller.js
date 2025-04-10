@@ -12,6 +12,13 @@ const axios = require("axios");
 const FormData = require("form-data");
 const sharp = require("sharp");
 
+
+const formatToWindowsPath = (filePath) => {
+  return filePath.replace(/\//g, "\\");
+};
+
+
+
 exports.getFoderAll = async (req, res) => {
   try {
     const { folder, name } = req.query;
@@ -163,10 +170,9 @@ exports.uploadFile = async (req, res) => {
       }
       const savePromises = [];
       imagePaths.map((item) => {
-        const pathImg = item.split("\\");
-        pathImg.pop();
-        const result = pathImg.join("\\");
-
+        console.log("item",item)
+       .pop();
+        const result = path.dirname(item)
         const newFile = new File({
           name: item,
           folder: fileName,
@@ -404,7 +410,7 @@ async function Logdata() {
     const ids = "67ca90b98ce0370ab619c9ed";
     // const files = await File.findById(ids)
     const files = await File.find();
-    // console.log("ds",files)
+    console.log("ds",files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }

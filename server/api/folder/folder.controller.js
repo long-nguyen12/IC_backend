@@ -14,12 +14,11 @@ const formatToWindowsPath = (filePath) => {
 const getFolderData = async (dir) => {
   try {
     const pathQuery = formatToWindowsPath(dir)
-    console.log("pathQuery",pathQuery)
+    console.log("pathQuery---------------------",pathQuery)
     const items = await fs.promises.readdir(dir, { withFileTypes: true });
 
     // Lấy danh sách hình ảnh từ database (nếu có sử dụng MongoDB)
     const imgList = await File.find({ path: pathQuery }).catch(() => []);
-    console.log("imgList",imgList)
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
 
     let children = [];
@@ -57,13 +56,13 @@ const getFolderData = async (dir) => {
 
 
 exports.getData = async (req, res) => {
-  console.log("query",req.params)
+
   let folderPath = req.params.folderPath || "";
 
   if (!fs.existsSync(folderPath)) {
     return res.status(404).json({ message: "Thư mục không tồn tại 123." });
   }
-
+  console.log("folderPath",folderPath)
   const data = await getFolderData(folderPath);
   
   res.status(200).json({ message: "Danh sách thư mục và filessss.",data });

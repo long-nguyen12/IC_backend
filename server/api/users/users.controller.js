@@ -55,8 +55,9 @@ async function createUser(req, res) {
 async function loginUser(req, res) {
  
   try {
-    const { userName, password } = req.body;
-    const user = await User.findOne({ userName });
+    const { email, password } = req.body;
+    console.log("userName",email)
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Sai tài khoản hoặc mật khẩu" });
     }
