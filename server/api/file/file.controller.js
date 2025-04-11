@@ -12,6 +12,13 @@ const axios = require("axios");
 const FormData = require("form-data");
 const sharp = require("sharp");
 
+
+const formatToWindowsPath = (filePath) => {
+  return filePath.replace(/\//g, "\\");
+};
+
+
+
 exports.getFoderAll = async (req, res) => {
   try {
     const { folder, name } = req.query;
@@ -163,10 +170,9 @@ exports.uploadFile = async (req, res) => {
       }
       const savePromises = [];
       imagePaths.map((item) => {
-        const pathImg = item.split("\\");
-        pathImg.pop();
-        const result = pathImg.join("\\");
-
+        console.log("item",item)
+       .pop();
+        const result = path.dirname(item)
         const newFile = new File({
           name: item,
           folder: fileName,
