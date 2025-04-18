@@ -1,4 +1,5 @@
 const File = require("./file.model");
+const lolder = require("../folder/folder.model");
 const Describe = require("../describe/describe.model");
 const Categories = require("../categories/categories.model");
 const fs = require("fs");
@@ -11,6 +12,7 @@ const HistoryController = require("../history/history.controller");
 const axios = require("axios");
 const FormData = require("form-data");
 const sharp = require("sharp");
+const Folder = require("../folder/folder.model");
 
 
 const formatToWindowsPath = (filePath) => {
@@ -53,14 +55,14 @@ exports.SendAI = async (req, res) => {
         },
       })
       .then(async (response) => {
-        console.log("response.data",response.data)
-        const linkBoximg = `https://icai.ailabs.io.vn/v1/api/images/` +  response.data.dectect_path.split("/").pop()
+        console.log("response.data", response.data)
+        const linkBoximg = `https://icai.ailabs.io.vn/v1/api/images/` + response.data.dectect_path.split("/").pop()
         const fileAI = await File.findOneAndUpdate(
           { _id: req.body.id },
           { $set: { describe: linkBoximg } },
           { returnDocument: "after" }
         );
-        res.status(200).json(fileAI );
+        res.status(200).json(fileAI);
       })
       .catch((error) => {
         console.error(`Lỗi upload: ${filePath}`, error.message);
@@ -116,11 +118,11 @@ exports.getFileByFolder = async (req, res) => {
 exports.getFileId = async (req, res) => {
   try {
     // const { folder, name , Describe } = req.query;
- 
+
     const file = await File.findById(req.query.id);
     // file.haveCaption = true;
     // file.Describe = Describe;
-    
+
     res.status(200).json(file);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -148,53 +150,87 @@ exports.uploadFile = async (req, res) => {
     return res.status(400).send("No file uploaded.");
   }
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
-  const filePath = req.file.path;
+  const filePath = path.normalize(req.file.path); // Normalize the file path
   const fileName = path.basename(filePath, path.extname(filePath));
 
- 
-
   try {
-    const folrder = await File.find({ folder: fileName });
-   
-    if (folrder.length == 0) {
-      let imagePaths = [];
+    const folder = await File.find({ folder: fileName + "ss" });
+    console.log("filePath", filePath)
+    // if (folder.length === 0) {
+    let imagePaths = [];
+    console.log("savedFolder");
+    if (fileExtension === ".zip") {
+      imagePaths = await unzipDirectory(filePath, fileName);
 
-      if (fileExtension === ".zip") {
-        imagePaths = await unzipDirectory(filePath, fileName);
-      } else if (fileExtension === ".rar") {
-        imagePaths = await extractImagesFromRar(filePath, fileName);
-      } else {
-        return res
-          .status(400)
-          .send("Unsupported file format. Please upload a zip or rar file.");
-      }
-      const savePromises = [];
-      imagePaths.map((item) => {
-        console.log("item",item)
-       .pop();
-        const result = path.dirname(item)
+
+      const folderRecord = new Folder({
+        folder: fileName,
+        name: fileName,
+        path: filePath,
+      });
+      const savedFolder = await folderRecord.save();
+      console.log("savedFolder", savedFolder);
+
+
+
+      const savePromises = imagePaths.map((item) => {
+        const result = path.dirname(item);
         const newFile = new File({
           name: item,
           folder: fileName,
-          path: result,
+          path: path.normalize(result),
+          Id_folder: savedFolder._id,
         });
-        newFile
+        return newFile
           .save()
           .then(() =>
             HistoryController.createHistory(
               req.user.userId,
               req.user.email,
-              `Thêm mới file ${path}`,
+              `Thêm mới file ${result}`,
               item
             )
           )
-          .catch((error) => console.error(`Error saving file ${item}:`, error));
+          .catch((error) =>
+            console.error(`Error saving file ${item}:`, error)
+          );
       });
 
-      res.status(201).send("File uploaded successfully.");
+      await Promise.all(savePromises);
+    } else if (fileExtension === ".rar") {
+      imagePaths = await extractImagesFromRar(filePath, fileName);
     } else {
-      res.status(405).send("Thư mục đãn tồn tại");
+      return res
+        .status(400)
+        .send("Unsupported file format. Please upload a zip or rar file.");
     }
+
+    // const savePromises = imagePaths.map((item) => {
+    //   const result = path.dirname(item); 
+    //   const newFile = new File({
+    //     name: item,
+    //     folder: fileName,
+    //     path: path.normalize(result),
+    //   });
+    //   return newFile
+    //     .save()
+    //     .then(() =>
+    //       HistoryController.createHistory(
+    //         req.user.userId,
+    //         req.user.email,
+    //         `Thêm mới file ${result}`,
+    //         item
+    //       )
+    //     )
+    //     .catch((error) => console.error(`Error saving file ${item}:`, error));
+    // });
+
+    // await Promise.all(savePromises);
+
+    res.status(201).send("File uploaded successfully.");
+    // } else {
+    //   res.status(405).send("Thư mục đã tồn tại");
+    // }
   } catch (err) {
     res.status(400).json({ message: `ERROR: ${err.message}` });
   }
@@ -203,7 +239,7 @@ exports.uploadFile = async (req, res) => {
 exports.deleteFolder = async (req, res) => {
   try {
     const folderName = req.params.folderName;
- 
+    console.log("folderNamedelete", folderName);
     await File.deleteMany({ folder: folderName });
     const folderPath = path.join(
       __dirname,
@@ -214,11 +250,12 @@ exports.deleteFolder = async (req, res) => {
       folderName
     );
 
- 
+    await Folder.deleteMany({ name: folderName });
 
-    if (!fs.existsSync(folderPath)) {
-      return res.status(404).json({ error: "Thư mục không tồn tạissss" });
-    }
+
+    // if (!fs.existsSync(folderPath)) {
+    //   return res.status(404).json({ error: "Thư mục không tồn tạissss" });
+    // }
 
     fs.rmSync(folderPath, { recursive: true, force: true });
 
@@ -293,7 +330,7 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
   await new Promise((resolve, reject) => {
     zip.extractAllToAsync(extractPath, true, (error) => {
       if (error) {
-        
+
         reject(error);
       } else {
         console.log(`Extracted to "${outputDirectory}" successfully`);
@@ -369,8 +406,6 @@ async function resizeImage(imagePath) {
       .toFile(outputPath);
 
     await fs.renameSync(outputPath, imagePath);
-
-    // console.log(`Resized: ${imagePath}`);
     return outputPath;
   } catch (error) {
     console.error(`Error processing ${imagePath}:`, error);
@@ -390,5 +425,28 @@ async function processImagesInFolder(folderPath) {
     await Promise.all(images.map((image) => resizeImage(image)));
   } catch (e) {
     console.log(e);
+  }
+}
+
+// eleteAllData()
+
+async function eleteAllData() {
+  try {
+    await File.deleteMany({ folder: "aa" });
+    console.log("Đã xóa toàn bộ dữ liệu trong collection!");
+  } catch (error) {
+    console.error("Lỗi khi xóa dữ liệu:", error);
+  }
+}
+
+Logdata();
+async function Logdata() {
+  try {
+    const ids = "67ca90b98ce0370ab619c9ed";
+    // const files = await File.findById(ids)
+    const files = await File.find({folder:'image_traffic'});
+    // console.log("ds", files)
+  } catch (error) {
+    console.error("Lỗi khi xóa dữ liệu:", error);
   }
 }

@@ -219,12 +219,14 @@ const DeletedUser = async (req, res) => {
 
 const Logout = async (req, res) => {
   try {
+    console.log("Logout")
+    // Xóa cookie authToken
     res.cookie('authToken', '', {
         expires: new Date(0),
         httpOnly: true, 
         secure: true    
     });
-    res.status(304).json({ error: "Internal server error" });
+    res.status(200).json({ message: "Internal server error" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
