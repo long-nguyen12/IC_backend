@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const File = require("../file/file.model");
+const Folder = require("./folder.model");
 
 // const getImageDb = async () => {
 //   const file = await File.find();
@@ -11,40 +12,15 @@ const formatToWindowsPath = (filePath) => {
   return filePath.replace(/\//g, "\\");
 };
 
+
 const getFolderData = async (dir) => {
   try {
-    const pathQuery = formatToWindowsPath(dir)
-    console.log("pathQuery---------------------",pathQuery)
-    const items = await fs.promises.readdir(dir, { withFileTypes: true });
-
-    // Lấy danh sách hình ảnh từ database (nếu có sử dụng MongoDB)
-    const imgList = await File.find({ path: pathQuery }).catch(() => []);
-    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
-
-    let children = [];
-    let images = [...imgList];
-    let otherFiles = [];
-
-   
-    items.forEach((item) => {
-      const filePath = path.join(dir, item.name);
-      if (item.isDirectory()) {
-        children.push({
-          name: item.name,
-          path: filePath,
-        });
-      } else if (item.isFile()) {
-        const ext = path.extname(item.name).toLowerCase();
-        if (imageExtensions.includes(ext)) {
-          // images.push({ name: item.name, path: filePath });
-        } else {
-          otherFiles.push({ name: item.name, path: filePath });
-        }
-      }
-    });
-
-    return { name: path.basename(dir), path: dir, children, images, otherFiles };
-
+    const folderData = await Folder.find({_id: dir});
+    const listImg = await File.find({Id_folder: dir});
+    console.log("link",dir)
+    // return folderData;
+    return { name: folderData.name, children: [], images: listImg, otherFiles: [] };
+    // res.status(200).json({ message: "Danh sách tất cả các thư mục." });
   } catch (err) {
     console.error("Lỗi khi đọc thư mục:", err);
     return { name: path.basename(dir), path: dir, children: [], images: [], otherFiles: [] };
@@ -59,11 +35,12 @@ exports.getData = async (req, res) => {
 
   let folderPath = req.params.folderPath || "";
 
-  if (!fs.existsSync(folderPath)) {
-    return res.status(404).json({ message: "Thư mục không tồn tại 123." });
-  }
+  // if (!fs.existsSync(folderPath)) {
+  //   return res.status(404).json({ message: "Thư mục không tồn tại 123." });
+  // }
   console.log("folderPath",folderPath)
-  const data = await getFolderData(folderPath);
+  // const data = await getFolderData(folderPath);
+  const data ="dsad"
   
   res.status(200).json({ message: "Danh sách thư mục và filessss.",data });
 };
@@ -129,62 +106,20 @@ exports.getFolder = async (req, res) => {
 
 exports.getALLFolder = async (req, res) => {
   try {
-    const uploadsDir = "uploads";
-
-
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir);
+    const Id_folder = req.query.Id_folder
+    if(Id_folder === "all"){
+      console.log(req.query)
+      const folders = await Folder.find().sort({ createdAt: 1 });
+      res.status(200).json({ name:"", path: "", children: folders, images: [], otherFiles: [] });
+    }else{
+      const data = await getFolderData(Id_folder);
+      res.status(200).json(data);
     }
-    const buildFolderTree = (dir, parentPath = dir) => {
-      try {
-        const items = fs.readdirSync(dir, { withFileTypes: true });
-        const children = items
-          .filter((item) => item.isDirectory())
-          .map((folder) => {
-            const folderPath = path.join(dir, folder.name);
-            return {
-              name: folder.name,
-              path: folderPath,
-              children: getFolderData(folderPath).children,
-              images: getFolderData(folderPath).images,
-              otherFiles: getFolderData(folderPath).otherFiles,
-            };
-          });
-    
-        // Lấy file và phân loại
-        const images = [];
-        const otherFiles = [];
-        const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
-    
-        items.filter((item) => item.isFile()).forEach((file) => {
-          const filePath = path.join(dir, file.name);
-          const ext = path.extname(file.name).toLowerCase();
-          if (imageExtensions.includes(ext)) {
-            images.push({ name: file.name, path: filePath });
-          } else {
-            otherFiles.push({ name: file.name, path: filePath });
-          }
-        });
-    
-        return { name: path.basename(dir), path: dir, children, images, otherFiles };
-      } catch (err) {
-       
-        return { name: path.basename(dir), path: dir, children: [], images: [], otherFiles: [] };
-      }
-    };
-
-    
-    const folderTree = buildFolderTree(uploadsDir);
-
-    res.status(200).json({
-      message: "Cây danh mục kèm file.",
-      data: folderTree,
-    });
+     
   } catch (err) {
+   
     res.status(500).json({ message: "Lỗi hệ thống", error: err.message });
   }
-
-  
 };
 
 
