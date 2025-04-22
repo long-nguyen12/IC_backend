@@ -82,8 +82,8 @@ async function loginUser(req, res) {
       path: '/',
     });
 
-
-    res.send('oke');
+  
+    res.send({ token, user, message: "Đăng nhập thành công" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -146,12 +146,14 @@ const editUserRole = async (req, res) => {
 const UpdateInfoUser = async (req, res) => {
   try {
     const newUser = req.body
+    console.log("newUser",newUser)
     const user = await User.findById(req.user.userId);
     const updatedUser = await User.findByIdAndUpdate(
       req.body._id,
       { 
         userName: newUser.userName,
-        email:newUser.email
+        email:newUser.email,
+        role: newUser.role,
        },
       { new: true } 
     );
