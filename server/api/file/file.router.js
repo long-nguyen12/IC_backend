@@ -17,6 +17,7 @@ const upload = multer({ storage: storage });
 
 router.get("/get-file-name", authenticateToken, fileController.getFileByFolder);
 router.get("/get-file-id", authenticateToken, fileController.getFileId);
+router.get("/delete-file/:id", authenticateToken, fileController.deleteFile);
 router.put(
   "/update-file-info",
   authenticateToken,
