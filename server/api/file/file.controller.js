@@ -19,7 +19,19 @@ const formatToWindowsPath = (filePath) => {
   return filePath.replace(/\//g, "\\");
 };
 
+exports.deleteFile = async (req, res) => {
+  try {   
+    console.log("req", req.params.id);
+    const file = await File.findById(req.params.id);
+  
+    if (!file) { return res.status(404).json({ error: "File not found" })  }
+    await file.deleteOne();
+    res.status(200).json({ message: "Xóa file thành công!" });
 
+  }catch (error) {
+        res.status(500).json({ error: error.message });
+  }
+}
 
 exports.getFoderAll = async (req, res) => {
   try {
@@ -392,6 +404,8 @@ async function getAllImages(dir) {
   }
   return images;
 }
+
+
 
 /**
  * Resize image while preserving directory structure
