@@ -453,12 +453,12 @@ async function eleteAllData() {
   }
 }
 
-Logdata();
+// Logdata();
 async function Logdata() {
   try {
     const ids = "67ca90b98ce0370ab619c9ed";
     // const files = await File.findById(ids)
-    const files = await File.find({folder:'image_traffic'});
+    const files = await File.find();
     // console.log("ds", files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);

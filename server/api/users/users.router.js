@@ -14,12 +14,19 @@ const {
   UpdateInfoUser
 } = require("./users.controller");
 
+
+const resetPasswordHandler = require("./resetPassword");
+const forgotPassword = require("./forgotPassword");
+
+
 const { authenticateToken, verifyAdmin }  = require("../../auth");
 
 const upload = multer();
 
 router.post("/register",authenticateToken, upload.none(), createUser);
 router.post("/login", loginUser);
+router.post("/reset-password", resetPasswordHandler);
+router.post("/forgot-password", forgotPassword);
 router.get("/logout", Logout);
 router.get("/user",authenticateToken,getUserList);
 router.put("/update",authenticateToken, UpdateProFile);
