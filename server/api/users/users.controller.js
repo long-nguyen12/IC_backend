@@ -10,6 +10,7 @@ const config = require(`./../../constant/config`)
 async function createUser(req, res) {
   try {
     const { userName, password, email } = req.body;
+    console.log("password",password)
     const validateEmployeename = async (name) => {
       let employee = await User.findOne({ userName });
       return employee ? false : true;
@@ -43,6 +44,7 @@ async function createUser(req, res) {
       role: ["edit"],
     });
     await user.save()
+    console.log("user",user)
     .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm tài khoản ${user.userName}`, user) )
     .catch((error) => console.error(`Error saving file ${user}:`, error));
 
@@ -85,6 +87,7 @@ async function loginUser(req, res) {
   
     res.send({ token, user, message: "Đăng nhập thành công" });
   } catch (error) {
+    console.error("Lỗi khi đăng nhập:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
@@ -234,5 +237,18 @@ const Logout = async (req, res) => {
   }
 };
 
+
+async function Logdata() {
+  try {
+    const ids = "67ca90b98ce0370ab619c9ed";
+    // const files = await File.findById(ids)
+    const files = await User.find();
+    console.log("ds", files)
+  } catch (error) {
+    console.error("Lỗi khi xóa dữ liệu:", error);
+  }
+}
+
+//  Logdata()
 
 module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile,DeletedUser,UpdateInfoUser };

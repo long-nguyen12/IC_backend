@@ -22,6 +22,15 @@ const userSchema = new mongoose.Schema(
     avartar : {
       type: String,
     },
+
+    resetToken : {
+      type: String,
+    },
+
+    resetTokenExpires : {
+      type: Date,
+    },
+
     role: {
       type: [String],
       enum: ["upload", "edit", "delete", "admin"],
