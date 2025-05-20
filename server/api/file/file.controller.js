@@ -170,21 +170,16 @@ exports.uploadFile = async (req, res) => {
     console.log("filePath", filePath)
     // if (folder.length === 0) {
     let imagePaths = [];
-    console.log("savedFolder");
+    
     if (fileExtension === ".zip") {
       imagePaths = await unzipDirectory(filePath, fileName);
-
-
       const folderRecord = new Folder({
         folder: fileName,
         name: fileName,
         path: filePath,
       });
       const savedFolder = await folderRecord.save();
-      console.log("savedFolder", savedFolder);
-
-
-
+  
       const savePromises = imagePaths.map((item) => {
         const result = path.dirname(item);
         const newFile = new File({
@@ -346,7 +341,7 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
         reject(error);
       } else {
         console.log(`Extracted to "${outputDirectory}" successfully`);
-        // processImagesInFolder(extractPath);
+        processImagesInFolder(extractPath);
         resolve();
       }
     });
@@ -453,13 +448,13 @@ async function eleteAllData() {
   }
 }
 
-// Logdata();
+Logdata()
 async function Logdata() {
   try {
     const ids = "67ca90b98ce0370ab619c9ed";
     // const files = await File.findById(ids)
-    const files = await File.find();
-    // console.log("ds", files)
+    const files = await File.find({folder: "TH"});
+    console.log("ds", files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
