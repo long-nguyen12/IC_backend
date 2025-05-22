@@ -94,7 +94,6 @@ exports.viewImage = async (req, res) => {
 
 
 exports.upload = async (req,res)=>{
-  console.log("reqreqreqreqreq",req.file)
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }

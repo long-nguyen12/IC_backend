@@ -9,7 +9,7 @@ const {
   getAllDescribesByFolder,
 } = require("./describe.controller");
 const multer = require("multer");
-const authenticateToken = require("../../auth");
+const {authenticateToken} = require("../../auth");
 
 const upload = multer();
 
@@ -17,7 +17,6 @@ router.post(
   "/describe",
   authenticateToken,
   (req, res, next) => {
-    // Check if the user has the necessary role to access this route
     if (!(req.user.role.includes("edit") || req.user.role.includes("admin"))) {
       return res.status(403).json({ error: "Không có quyền truy cập" });
     }
@@ -29,6 +28,6 @@ router.post(
 router.get("/describe_all", getAllDescribes);
 router.get("/describe_all_by_folder", getAllDescribesByFolder);
 router.get("/describe", getDescribeByName);
-router.post("/create_json", upload.none(), getAllDataByFolder);
+router.get("/create_json", getAllDataByFolder);
 
 module.exports = router;

@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fileController = require("./file.controller");
-const authenticateToken = require("../../auth");
+const { authenticateToken } = require("../../auth");
 const HistoryController = require("../history/history.controller");
 const router = express.Router();
 const storage = multer.diskStorage({
@@ -16,6 +16,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.get("/get-file-name", authenticateToken, fileController.getFileByFolder);
+router.get("/get-file-id", authenticateToken, fileController.getFileId);
+router.get("/delete-file/:id", authenticateToken, fileController.deleteFile);
 router.put(
   "/update-file-info",
   authenticateToken,
@@ -26,12 +28,15 @@ router.put(
 router.get("/foder", authenticateToken, fileController.getFoderAll);
 
 router.post("/updatefile",authenticateToken, fileController.updateFileInfo)
+router.post("/singbox",authenticateToken, fileController.SendAI)
+
+router.get("/delete-folder/:folderName",fileController.deleteFolder);
+
 
 router.post(
   "/upload",
   authenticateToken,
   (req, res, next) => {
-    console.log(req.user.role);
     if (
       !(req.user.role.includes("upload") || req.user.role.includes("admin"))
     ) {

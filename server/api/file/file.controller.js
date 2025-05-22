@@ -1,4 +1,5 @@
 const File = require("./file.model");
+const lolder = require("../folder/folder.model");
 const Describe = require("../describe/describe.model");
 const Categories = require("../categories/categories.model");
 const fs = require("fs");
@@ -8,13 +9,34 @@ const unrar = require("unrar");
 const { createExtractorFromFile } = require("node-unrar-js");
 const AdmZip = require("adm-zip");
 const HistoryController = require("../history/history.controller");
+const axios = require("axios");
+const FormData = require("form-data");
+const sharp = require("sharp");
+const Folder = require("../folder/folder.model");
 
+
+const formatToWindowsPath = (filePath) => {
+  return filePath.replace(/\//g, "\\");
+};
+
+exports.deleteFile = async (req, res) => {
+  try {   
+    console.log("req", req.params.id);
+    const file = await File.findById(req.params.id);
+  
+    if (!file) { return res.status(404).json({ error: "File not found" })  }
+    await file.deleteOne();
+    res.status(200).json({ message: "Xóa file thành công!" });
+
+  }catch (error) {
+        res.status(500).json({ error: error.message });
+  }
+}
 
 exports.getFoderAll = async (req, res) => {
   try {
     const { folder, name } = req.query;
     const file = await File.find();
-    console.log("file",file)
     file.haveCaption = true;
     await file.save();
     res.status(200).message("Thêm mô tả thành công!");
@@ -23,11 +45,49 @@ exports.getFoderAll = async (req, res) => {
   }
 };
 
+exports.SendAI = async (req, res) => {
+  try {
+
+    const fileName = req.body.dectect_path;
+
+    const filePath = path.join(__dirname, "..", "..", "..", fileName.replace(/\\/g, "/"));
+
+    if (!fs.existsSync(filePath)) {
+
+      return res.status(404).json({ error: `File not found: ${filePath} ` });
+
+    }
+
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(filePath));
+    await axios
+      .post("https://icai.ailabs.io.vn/v1/api/detection", formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      })
+      .then(async (response) => {
+        console.log("response.data", response.data)
+        const linkBoximg = `https://icai.ailabs.io.vn/v1/api/images/` + response.data.dectect_path.split("/").pop()
+        const fileAI = await File.findOneAndUpdate(
+          { _id: req.body.id },
+          { $set: { describe: linkBoximg } },
+          { returnDocument: "after" }
+        );
+        res.status(200).json(fileAI);
+      })
+      .catch((error) => {
+        console.error(`Lỗi upload: ${filePath}`, error.message);
+        res.status(500).json({ error: error.message });
+      });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 exports.getFileByFolder = async (req, res) => {
   try {
     const { folder, page = 1, limit = 25, sort, includes } = req.query;
-    console.log("foder",req.query)
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
 
@@ -47,8 +107,6 @@ exports.getFileByFolder = async (req, res) => {
     });
     let sortFile;
 
-    console.log("file",file)
-
     if (sort === "asc") {
       sortFile = file
         .sort((b, a) => b.haveCaption - a.haveCaption)
@@ -62,107 +120,6 @@ exports.getFileByFolder = async (req, res) => {
         .sort((b, a) => b.haveCaption - a.haveCaption)
         .slice((page - 1) * limit, page * limit);
     }
-    // ----------------------------- SHOULD MOVE TO ANOTHER FILE -------------------------------
-    // Check if folder have a JSON file
-    // const fileJSON = await File.find({
-    //   folder,
-    //   name: { $regex: /\.(json)$/i },
-    // });
-    // fileJSON.map((item) => {
-    //   var obj;
-    //   fs.readFile(
-    //     path.join("uploads", item.folder, item.name),
-    //     "utf8",
-    //     function (err, data) {
-    //       if (err) throw err;
-    //       obj = JSON.parse(data);
-    //       obj.categories.forEach(async (jsonCategory) => {
-    //         try {
-    //           // Check if the category already exists for the current folder
-    //           const existingCategory = await Categories.findOne({
-    //             folder: item.name.split("/")[0],
-    //             categories_name: jsonCategory.name,
-    //           });
-
-    //           // If the category does not exist, create and save it
-    //           if (!existingCategory) {
-    //             const category = new Categories({
-    //               categories_id: jsonCategory.id,
-    //               categories_name: jsonCategory.name,
-    //               supercategory: jsonCategory.supercategory,
-    //               folder: item.name.split("/")[0],
-    //             });
-    //             await category.save();
-    //             console.log(
-    //               `Category '${jsonCategory.name}' saved successfully.`
-    //             );
-    //           }
-    //         } catch (error) {
-    //           console.error("Error saving category:", error);
-    //         }
-    //       });
-    //       obj.images.forEach(async (image) => {
-    //         const describe = {
-    //           name: item.name.split("/")[0] + "/" + image.file_name,
-    //           folder: item.folder,
-    //           bbox: [],
-    //           describe: [],
-    //           categories_id: [],
-    //           categories_name: [],
-    //         };
-    //         const annotations = obj.annotations.filter(
-    //           (annotation) => annotation.image_id === image.id
-    //         );
-
-    //         annotations.forEach(async (annotation) => {
-    //           if (annotation.caption || annotation.segment_caption) {
-    //             describe.describe.push({
-    //               caption: annotation?.caption?.toString(),
-    //               segment_caption: annotation?.segment_caption?.toString(),
-    //             });
-    //             const imgFile = await File.findOne({
-    //               folder,
-    //               name: { $regex: image.file_name, $options: "i" },
-    //             });
-    //             if (imgFile) {
-    //               imgFile.haveCaption = true;
-    //               await imgFile.save();
-    //             }
-    //           }
-    //           if (annotation.bbox) {
-    //             describe.bbox.push(annotation.bbox);
-    //           }
-    //           const category = obj.categories.find(
-    //             (category) => category.id === annotation.category_id
-    //           );
-    //           if (category) {
-    //             describe.categories_id.push(category.id.toString());
-    //             describe.categories_name.push(category.name);
-    //           }
-    //         });
-    //         try {
-    //           const existingDescribe = await Describe.findOne({
-    //             name: describe.name,
-    //           });
-    //           if (!existingDescribe) {
-    //             await Describe.create(describe);
-    //             // await Categories.create(folderCategory);
-    //           }
-    //         } catch (error) {
-    //           console.error("Error saving describe:", error);
-    //         }
-    //       });
-    //     }
-    //   );
-    // });
-    // ----------------------------- SHOULD MOVE TO ANOTHER FILE -------------------------------
-
-    // ---------------------------------
-    // if (file.length === 0) {
-    //   return res
-    //     .status(404)
-    //     .json({ message: "Chưa có ảnh nào trong mục này có mô tả!" });
-    // }
 
     res.status(200).json({ file: sortFile });
   } catch (error) {
@@ -170,43 +127,83 @@ exports.getFileByFolder = async (req, res) => {
   }
 };
 
-exports.updateFileInfo = async (req, res) => {
+exports.getFileId = async (req, res) => {
   try {
     // const { folder, name , Describe } = req.query;
 
-    console.log("--------type---------", typeof req.body.caption)
-    
-    console.log("Headers nhận được:", req.headers);
-    console.log("Body nhận được:", req.body);
-      
-  
-    const file = await File.findById(req.body.id);
+    const file = await File.findById(req.query.id);
     // file.haveCaption = true;
     // file.Describe = Describe;
-    file.caption  = JSON.parse(req.body.caption) 
-    file.markModified("data")
-    await file.save("file",file);
-    console.log("file",file)
-    res.status(200).json({success:true, file:file});
-  } catch (error) {
 
+    res.status(200).json(file);
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.uploadFile = async (req, res ) => {
+
+exports.updateFileInfo = async (req, res) => {
+  try {
+    // const { folder, name , Describe } = req.query;
+    const file = await File.findById(req.body.id);
+    // file.haveCaption = true;
+    // file.Describe = Describe;
+    file.caption = JSON.parse(req.body.caption);
+    file.markModified("data");
+    await file.save("file", file);
+    res.status(200).json({ success: true, file: file });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.uploadFile = async (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
   }
-  console.log("uerUpdate", req.user)
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
-  const filePath = req.file.path;
+  const filePath = path.normalize(req.file.path); // Normalize the file path
   const fileName = path.basename(filePath, path.extname(filePath));
-  try {
-    let imagePaths = [];
 
+  try {
+    const folder = await File.find({ folder: fileName + "ss" });
+    console.log("filePath", filePath)
+    // if (folder.length === 0) {
+    let imagePaths = [];
+    
     if (fileExtension === ".zip") {
       imagePaths = await unzipDirectory(filePath, fileName);
+      const folderRecord = new Folder({
+        folder: fileName,
+        name: fileName,
+        path: filePath,
+      });
+      const savedFolder = await folderRecord.save();
+  
+      const savePromises = imagePaths.map((item) => {
+        const result = path.dirname(item);
+        const newFile = new File({
+          name: item,
+          folder: fileName,
+          path: path.normalize(result),
+          Id_folder: savedFolder._id,
+        });
+        return newFile
+          .save()
+          .then(() =>
+            HistoryController.createHistory(
+              req.user.userId,
+              req.user.email,
+              `Thêm mới file ${result}`,
+              item
+            )
+          )
+          .catch((error) =>
+            console.error(`Error saving file ${item}:`, error)
+          );
+      });
+
+      await Promise.all(savePromises);
     } else if (fileExtension === ".rar") {
       imagePaths = await extractImagesFromRar(filePath, fileName);
     } else {
@@ -214,23 +211,65 @@ exports.uploadFile = async (req, res ) => {
         .status(400)
         .send("Unsupported file format. Please upload a zip or rar file.");
     }
-    const savePromises = [];
-    imagePaths.map((item) => {
-      const newFile = new File({
-        name: item,
-        folder: fileName,     
-        path: req.file.path,
-      });
-      console.log("newFile",newFile)
-      newFile.save()
-        .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm mới file ${fileName}`, item) )
-        .catch((error) => console.error(`Error saving file ${item}:`, error));
-    });
 
+    // const savePromises = imagePaths.map((item) => {
+    //   const result = path.dirname(item); 
+    //   const newFile = new File({
+    //     name: item,
+    //     folder: fileName,
+    //     path: path.normalize(result),
+    //   });
+    //   return newFile
+    //     .save()
+    //     .then(() =>
+    //       HistoryController.createHistory(
+    //         req.user.userId,
+    //         req.user.email,
+    //         `Thêm mới file ${result}`,
+    //         item
+    //       )
+    //     )
+    //     .catch((error) => console.error(`Error saving file ${item}:`, error));
+    // });
+
+    // await Promise.all(savePromises);
 
     res.status(201).send("File uploaded successfully.");
+    // } else {
+    //   res.status(405).send("Thư mục đã tồn tại");
+    // }
   } catch (err) {
-    res.status(400).json({ message: `ERROR: ${err.message}`});
+    res.status(400).json({ message: `ERROR: ${err.message}` });
+  }
+};
+
+exports.deleteFolder = async (req, res) => {
+  try {
+    const folderName = req.params.folderName;
+    console.log("folderNamedelete", folderName);
+    await File.deleteMany({ folder: folderName });
+    const folderPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "uploads",
+      folderName
+    );
+
+    await Folder.deleteMany({ name: folderName });
+
+
+    // if (!fs.existsSync(folderPath)) {
+    //   return res.status(404).json({ error: "Thư mục không tồn tạissss" });
+    // }
+
+    fs.rmSync(folderPath, { recursive: true, force: true });
+
+    return res.status(200).json({ message: "Thư mục đã được xóa thành công" });
+  } catch (error) {
+    console.error("Lỗi khi xóa thư mục:", error.message);
+    return res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
   }
 };
 
@@ -269,35 +308,45 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
   const imagePaths = [];
   const folderPaths = [];
   const extractPath = path.join("uploads", outputDirectory);
+
   const zip = new AdmZip(inputFilePath);
-  var zipEntries = zip.getEntries();
-  zipEntries.forEach(function (zipEntry) {
+  const zipEntries = zip.getEntries();
+
+  zipEntries.forEach((zipEntry) => {
     const fileName = zipEntry.entryName.split("/");
     const imageExtension = path.extname(zipEntry.entryName).toLowerCase();
-    if (folderPaths.includes(fileName[0])) {
-    } else {
+
+    if (!folderPaths.includes(fileName[0])) {
       folderPaths.push(fileName[0]);
     }
-    if (
-      imageExtension === ".jpg" ||
-      imageExtension === ".jpeg" ||
-      imageExtension === ".png" ||
-      imageExtension === ".json"
-    ) {
-      imagePaths.push(zipEntry.entryName);
+
+    if ([".jpg", ".jpeg", ".png", ".json"].includes(imageExtension)) {
+      const relativePath = path.join(
+        "uploads",
+        outputDirectory,
+        zipEntry.entryName
+      );
+      imagePaths.push(relativePath);
     }
   });
-  new Promise((resolve, reject) => {
+
+  if (!fs.existsSync(extractPath)) {
+    fs.mkdirSync(extractPath, { recursive: true });
+  }
+
+  await new Promise((resolve, reject) => {
     zip.extractAllToAsync(extractPath, true, (error) => {
       if (error) {
-        console.log(error);
+
         reject(error);
       } else {
         console.log(`Extracted to "${outputDirectory}" successfully`);
+        processImagesInFolder(extractPath);
         resolve();
       }
     });
   });
+
   return imagePaths;
 }
 
@@ -331,28 +380,82 @@ async function extractImagesFromRar(filePath, folderName) {
   } catch (err) {
     console.error(err);
   }
+
+  await processImagesInFolder(extractPath);
   return imagePaths;
+}
+
+async function getAllImages(dir) {
+  let images = [];
+  const files = await fs.readdirSync(dir);
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    const stat = await fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      images = images.concat(await getAllImages(fullPath));
+    } else if (/\.(jpg|jpeg|png|webp)$/i.test(file)) {
+      images.push(fullPath);
+    }
+  }
+  return images;
 }
 
 
 
+/**
+ * Resize image while preserving directory structure
+ */
+async function resizeImage(imagePath) {
+  try {
+    const outputPath = imagePath + ".tmp"; // Temporary file
+
+    await sharp(imagePath)
+      .resize(1024, 768, { fit: "inside" })
+      .jpeg({ quality: 80 })
+      .toFile(outputPath);
+
+    await fs.renameSync(outputPath, imagePath);
+    return outputPath;
+  } catch (error) {
+    console.error(`Error processing ${imagePath}:`, error);
+    throw error;
+  }
+}
+
+async function processImagesInFolder(folderPath) {
+  try {
+    const images = await getAllImages(folderPath);
+
+    if (images.length === 0) {
+      console.log("No images found for compression.");
+      return;
+    }
+
+    await Promise.all(images.map((image) => resizeImage(image)));
+  } catch (e) {
+    console.log(e);
+  }
+}
+
 // eleteAllData()
 
-async function eleteAllData(){
+async function eleteAllData() {
   try {
-    await File.deleteMany({});
+    await File.deleteMany({ folder: "aa" });
     console.log("Đã xóa toàn bộ dữ liệu trong collection!");
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
-};
+}
 
 Logdata()
-async function Logdata(){
+async function Logdata() {
   try {
-    let ds = await File.find({});
-    console.log("datat",ds);
+    const ids = "67ca90b98ce0370ab619c9ed";
+    // const files = await File.findById(ids)
+    const files = await File.find({folder: "TH"});
+    console.log("ds", files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
   }
-};
+}

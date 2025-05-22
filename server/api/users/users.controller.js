@@ -2,11 +2,15 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("./users.model");
+const HistoryController = require("../history/history.controller")
+const config = require(`./../../constant/config`)
+
+
 
 async function createUser(req, res) {
   try {
     const { userName, password, email } = req.body;
-
+    console.log("password",password)
     const validateEmployeename = async (name) => {
       let employee = await User.findOne({ userName });
       return employee ? false : true;
@@ -39,8 +43,12 @@ async function createUser(req, res) {
       email,
       role: ["edit"],
     });
-    await user.save();
-    res.status(201).json({ message: "User created successfully" });
+    await user.save()
+    console.log("user",user)
+    .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Thêm tài khoản ${user.userName}`, user) )
+    .catch((error) => console.error(`Error saving file ${user}:`, error));
+
+    res.status(201).json({  user });
   } catch (error) {
     res.status(500).json({ error: error });
   }
@@ -49,8 +57,9 @@ async function createUser(req, res) {
 async function loginUser(req, res) {
  
   try {
-    const { userName, password } = req.body;
-    const user = await User.findOne({ userName });
+    const { email, password } = req.body;
+    console.log("userName",email)
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Sai tài khoản hoặc mật khẩu" });
     }
@@ -66,26 +75,25 @@ async function loginUser(req, res) {
       }
     );
 
-    console.log("đasadsadsa")
     res.cookie('authToken', token, {
       httpOnly: true, // Cookie không thể truy cập từ JavaScript
-      secure: false,  // Đặt true nếu bạn chạy trên HTTPS (để dễ dàng phát triển, có thể để false)
+      secure: true,  // Đặt true nếu bạn chạy trên HTTPS (để dễ dàng phát triển, có thể để false)
       maxAge: 24 * 60 * 60 * 1000, // Cookie tồn tại trong 1 ngày
       sameSite: 'Strict', // Cần thiết để cho phép gửi cookie cross-origin
-      Domain:'localhost', // Thay thế bằng tên miền của bạn
+      Domain:'iclabel-api.ailabs.io.vn', // Thay thế bằng tên miền của bạn
       path: '/',
     });
 
-
-    res.send('oke');
+  
+    res.send({ token, user, message: "Đăng nhập thành công" });
   } catch (error) {
+    console.error("Lỗi khi đăng nhập:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
 
 const getUserList = async (req, res) => {
   try {
-  
     const users = await User.find({});
     res.status(200).json(users);
   } catch (error) {
@@ -137,13 +145,40 @@ const editUserRole = async (req, res) => {
   }
 };
 
+
+const UpdateInfoUser = async (req, res) => {
+  try {
+    const newUser = req.body
+    console.log("newUser",newUser)
+    const user = await User.findById(req.user.userId);
+    const updatedUser = await User.findByIdAndUpdate(
+      req.body._id,
+      { 
+        userName: newUser.userName,
+        email:newUser.email,
+        role: newUser.role,
+       },
+      { new: true } 
+    );
+
+
+    // user.avartar = req.body.avatar;
+    // console.log("user$$$$$$$$$$$$$$",user)
+    await updatedUser.save()
+    .then(() =>  HistoryController.createHistory(req.user.userId, req.user.email,`Cập nhật thông tin tài khoản ${updatedUser.userName}`, updatedUser) )
+    .catch((error) => console.error(`Error saving file ${user}:`, error));
+
+
+    res.status(200).json( updatedUser );
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 const UpdateProFile = async (req, res) => {
-  
-  console.log("requet user",req.user)
-  console.log("requet update",req.body.avatar)
   try {
     const user = await User.findById(req.user.userId);
-    console.log("user--------------",user)
     // if (!user.avatar) {
     //   console.log("*********************")
     //   await user.updateMany({}, { $set: { avatar: req.body.avatar } });
@@ -160,32 +195,60 @@ const UpdateProFile = async (req, res) => {
       { new: true }  // Trả về tài liệu đã cập nhật
     );
 
+    await updatedUser.save()
+  
 
-    // user.avartar = req.body.avatar;
-    // console.log("user$$$$$$$$$$$$$$",user)
-    await updatedUser.save();
     res.status(200).json( updatedUser );
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
+const DeletedUser = async (req, res) => {
+  try {
+    const id  = req.params.id;
 
+    const deletedUser = await User.findByIdAndDelete(id)
+    if (!deletedUser) {
+      return res.status(404).json({ error: "Người dùng không tồn tại" });
+    }
 
+    HistoryController.createHistory(req.user.userId, req.user.email,`Xóa tài khoản ${deletedUser.userName}`, deletedUser)
+
+    return res.status(200).json({ message: "Xóa người dùng thành công", user: deletedUser });
+  } catch (error) {
+    console.error("Lỗi khi xóa người dùng:", error.message);
+    return res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
+  }
+};
 
 const Logout = async (req, res) => {
-  
   try {
+    console.log("Logout")
+    // Xóa cookie authToken
     res.cookie('authToken', '', {
         expires: new Date(0),
         httpOnly: true, 
         secure: true    
     });
-    res.status(304).json({ error: "Internal server error" });
+    res.status(200).json({ message: "Internal server error" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 
-module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile };
+async function Logdata() {
+  try {
+    const ids = "67ca90b98ce0370ab619c9ed";
+    // const files = await File.findById(ids)
+    const files = await User.find();
+    console.log("ds", files)
+  } catch (error) {
+    console.error("Lỗi khi xóa dữ liệu:", error);
+  }
+}
+
+//  Logdata()
+
+module.exports = { createUser, loginUser, getUserList, editUserRole,Logout,UpdateProFile,DeletedUser,UpdateInfoUser };

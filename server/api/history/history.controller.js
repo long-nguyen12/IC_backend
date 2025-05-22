@@ -11,7 +11,6 @@ const History = require("./history.model");
 
 exports.createHistory = async (userId,Email, action, details) => {
 try {
-   console.log("Email",Email)
     const historyRecord = new History({
         userId ,
         Email,
@@ -27,13 +26,10 @@ try {
   
  
 exports.getHistories = async (req, res) => {
-    console.log("--------aaa-------",req)
     try {
-        console.log("--------------------------------------------------")
         const histories = await History.find();
         res.status(200).json(histories);
     } catch (error) {
-        console.log("error",error)
         res.status(500).json({ message: 'Error retrieving histories', error: error.message });
     }
 };

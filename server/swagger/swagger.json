@@ -1,0 +1,779 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Annotation API",
+    "version": "1.0.0",
+    "description": "API documentation for the Annotation project"
+  },
+  "servers": [
+    {
+      "url": "http://ic-api.ailabs.io.vn/",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication related endpoints"
+    },
+    {
+      "name": "User",
+      "description": "User annotation management"
+    },
+    {
+      "name": "Admin",
+      "description": "Admin report and model management"
+    }
+  ],
+  "paths": {
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user info",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/signin": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Sign in",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Sign up",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "fullName",
+                  "password",
+                  "confirmPassword"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "birthday": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": ["male", "female", "other"],
+                    "description": "User's gender (must be one of: male, female, other)"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/auth/update-info": {
+      "patch": {
+        "tags": ["Auth"],
+        "summary": "Update user info",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["fullName"],
+                "properties": {
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "birthday": {
+                    "type": "string",
+                    "description": "User's birthday (format: yyyy-mm-dd)"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": ["male", "female", "other"],
+                    "description": "User's gender (must be one of: male, female, other)"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Forgot password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password", "confirmPassword"],
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/auth/delete-account": {
+      "delete": {
+        "tags": ["Auth"],
+        "summary": "Delete account",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/annotations": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get paginated annotations",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/annotations-all": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get all annotations",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/annotation/{id}": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get annotation by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/save-annotation": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Save a new annotation",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["annotationContent", "comment"],
+                "properties": {
+                  "annotationContent": { "type": "string" },
+                  "comment": { "type": "string" },
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "voiceFileUrl": { "type": "string" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/update-annotation/{id}": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Update an annotation",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "annotationContent": { "type": "string" },
+                  "comment": { "type": "string" },
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "voiceFileUrl": { "type": "string" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/delete-annotation/{id}": {
+      "delete": {
+        "tags": ["User"],
+        "summary": "Delete an annotation",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/reports": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all reports",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/admin/save-report": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Save a new report",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["fileName"],
+                "properties": {
+                  "fileName": { "type": "string" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/update-report/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Update a report",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["fileName"],
+                "properties": {
+                  "fileName": { "type": "string" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/delete-report/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete a report",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/models": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all AI models",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/admin/save-model": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Save a new AI model",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["modelName"],
+                "properties": {
+                  "modelName": { "type": "string" },
+                  "modelRunning": { "type": "boolean" },
+                  "isActivated": { "type": "boolean" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/update-model/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Update an AI model",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "modelName": { "type": "string" },
+                  "modelRunning": { "type": "boolean" },
+                  "isActivated": { "type": "boolean" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/delete-model/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete an AI model",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/datasets": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all Dataset",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/admin/save-dataset": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Save a new dataset",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["datasetName"],
+                "properties": {
+                  "datasetName": { "type": "string" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/update-dataset/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Update a dataset",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["datasetName"],
+                "properties": {
+                  "datasetName": { "type": "string" },
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/delete-dataset/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete a dataset",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all users",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/admin/user/{id}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get user by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/admin/delete-user/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete a user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/admin/update-user/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Update a user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": { "type": "string" },
+                  "address": { "type": "string" },
+                  "phoneNumber": { "type": "string" },
+                  "role": { "type": "string", "enum": ["admin", "user"] },
+                  "gender": {
+                    "type": "string",
+                    "enum": ["male", "female", "other"],
+                    "description": "User's gender (must be one of: male, female, other)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    }
+  }
+}
