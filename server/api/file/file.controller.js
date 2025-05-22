@@ -14,22 +14,23 @@ const FormData = require("form-data");
 const sharp = require("sharp");
 const Folder = require("../folder/folder.model");
 
+const FS = require("fs").promises;
 
 const formatToWindowsPath = (filePath) => {
   return filePath.replace(/\//g, "\\");
 };
 
 exports.deleteFile = async (req, res) => {
-  try {   
+  try {
     console.log("req", req.params.id);
     const file = await File.findById(req.params.id);
-  
-    if (!file) { return res.status(404).json({ error: "File not found" })  }
+
+    if (!file) { return res.status(404).json({ error: "File not found" }) }
     await file.deleteOne();
     res.status(200).json({ message: "Xóa file thành công!" });
 
-  }catch (error) {
-        res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 }
 
@@ -162,7 +163,7 @@ exports.uploadFile = async (req, res) => {
     return res.status(400).send("No file uploaded.");
   }
   const fileExtension = path.extname(req.file.originalname).toLowerCase();
-  const filePath = path.normalize(req.file.path); // Normalize the file path
+  const filePath = path.normalize(req.file.path);
   const fileName = path.basename(filePath, path.extname(filePath));
 
   try {
@@ -170,7 +171,7 @@ exports.uploadFile = async (req, res) => {
     console.log("filePath", filePath)
     // if (folder.length === 0) {
     let imagePaths = [];
-    
+
     if (fileExtension === ".zip") {
       imagePaths = await unzipDirectory(filePath, fileName);
       const folderRecord = new Folder({
@@ -179,7 +180,6 @@ exports.uploadFile = async (req, res) => {
         path: filePath,
       });
       const savedFolder = await folderRecord.save();
-  
       const savePromises = imagePaths.map((item) => {
         const result = path.dirname(item);
         const newFile = new File({
@@ -205,39 +205,51 @@ exports.uploadFile = async (req, res) => {
 
       await Promise.all(savePromises);
     } else if (fileExtension === ".rar") {
-      imagePaths = await extractImagesFromRar(filePath, fileName);
+      console.log("firlrear")
+      imagePaths = await unrarDirectory(filePath, fileName);
+      const folderRecord = new Folder({
+        folder: fileName,
+        name: fileName,
+        path: filePath,
+      });
+      const savedFolder = await folderRecord.save();
+      const savePromises = imagePaths.map((item) => {
+
+        const result = item;
+      
+        const newFile = new File({
+          name: item,
+          folder: fileName,
+          path: path.normalize(result),
+          Id_folder: savedFolder._id,
+        });
+        return newFile
+          .save()
+          .then(() =>
+            HistoryController.createHistory(
+              req.user.userId,
+              req.user.email,
+              `Thêm mới file ${result}`,
+              item
+            )
+          )
+          .catch((error) =>
+            console.error(`Error saving file ${item}:`, error)
+          );
+      });
+
+      await Promise.all(savePromises);
+
+
     } else {
       return res
         .status(400)
         .send("Unsupported file format. Please upload a zip or rar file.");
     }
 
-    // const savePromises = imagePaths.map((item) => {
-    //   const result = path.dirname(item); 
-    //   const newFile = new File({
-    //     name: item,
-    //     folder: fileName,
-    //     path: path.normalize(result),
-    //   });
-    //   return newFile
-    //     .save()
-    //     .then(() =>
-    //       HistoryController.createHistory(
-    //         req.user.userId,
-    //         req.user.email,
-    //         `Thêm mới file ${result}`,
-    //         item
-    //       )
-    //     )
-    //     .catch((error) => console.error(`Error saving file ${item}:`, error));
-    // });
-
-    // await Promise.all(savePromises);
 
     res.status(201).send("File uploaded successfully.");
-    // } else {
-    //   res.status(405).send("Thư mục đã tồn tại");
-    // }
+
   } catch (err) {
     res.status(400).json({ message: `ERROR: ${err.message}` });
   }
@@ -350,10 +362,10 @@ async function unzipDirectory(inputFilePath, outputDirectory) {
   return imagePaths;
 }
 
-async function extractImagesFromRar(filePath, folderName) {
+async function unrarDirectory(inputFilePath, outputDirectory) {
   const imagePaths = [];
-  const listFolder = [];
-  const extractPath = path.join("uploads", folderName);
+  const folderPaths = [];
+  const extractPath = path.join("uploads", outputDirectory);
 
   if (!fs.existsSync(extractPath)) {
     fs.mkdirSync(extractPath, { recursive: true });
@@ -361,29 +373,31 @@ async function extractImagesFromRar(filePath, folderName) {
 
   try {
     const extractor = await createExtractorFromFile({
-      filepath: filePath,
+      filepath: inputFilePath,
       targetPath: extractPath,
     });
-    const list = extractor.getFileList();
-    const extractedFiles = [...extractor.extract().files];
-    for (const file of extractedFiles) {
-      const fileName = path.basename(file.fileHeader.name);
-      if (file.fileHeader.name.includes("/")) {
-        if (!listFolder.includes(file.fileHeader.name.split("/")[0])) {
-          listFolder.push(file.fileHeader.name.split("/")[0]);
-        }
-        imagePaths.push(file.fileHeader.name);
-      } else {
-        imagePaths.push(fileName);
+
+    const extracted = await extractor.extract();
+
+    for (const file of extracted.files) {
+      const entryName = file.fileHeader.name;
+      const parts = entryName.split("/");
+      const ext = path.extname(entryName).toLowerCase();
+
+      if ([".jpg", ".jpeg", ".png", ".json"].includes(ext)) {
+        const relativePath = path.join("uploads", outputDirectory, entryName);
+        imagePaths.push(relativePath);
       }
     }
-  } catch (err) {
-    console.error(err);
-  }
 
-  await processImagesInFolder(extractPath);
-  return imagePaths;
+    return imagePaths;
+  } catch (err) {
+    console.error("RAR extract error:", err);
+    throw new Error(`Failed to extract RAR file: ${err.message}`);
+  }
 }
+
+
 
 async function getAllImages(dir) {
   let images = [];
@@ -422,6 +436,9 @@ async function resizeImage(imagePath) {
   }
 }
 
+
+
+
 async function processImagesInFolder(folderPath) {
   try {
     const images = await getAllImages(folderPath);
@@ -448,12 +465,12 @@ async function eleteAllData() {
   }
 }
 
-Logdata()
+// Logdata()
 async function Logdata() {
   try {
     const ids = "67ca90b98ce0370ab619c9ed";
     // const files = await File.findById(ids)
-    const files = await File.find({folder: "TH"});
+    const files = await File.find({ folder: "TH" });
     console.log("ds", files)
   } catch (error) {
     console.error("Lỗi khi xóa dữ liệu:", error);
