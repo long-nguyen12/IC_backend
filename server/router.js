@@ -18,4 +18,3 @@ router.use("/image", imageRoutes);
 router.use("/categories", categoriesRoutes);
 
 module.exports = router;
-    
